@@ -1,0 +1,2424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roster de Conductores</title>
+<style>
+  :root{
+    --azul:#1f3864; --azul2:#2e5aa8; --gris:#f4f6f9; --borde:#d7dde6;
+    --txt:#1c2430; --suave:#6b7787; --ok:#1e7e34; --rojo:#b02a37; --ambar:#9a6700; --wa:#128c4a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--txt);background:var(--gris);font-size:14px}
+  header{background:var(--azul);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header .sub{font-size:12px;opacity:.75;flex:1}
+  #estadoGuardado{font-size:11.5px;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:12px}
+  nav{display:flex;gap:2px;background:#fff;border-bottom:1px solid var(--borde);padding:0 14px;flex-wrap:wrap}
+  nav button{border:0;background:none;padding:12px 15px;font-size:14px;cursor:pointer;color:var(--suave);border-bottom:3px solid transparent;font-family:inherit}
+  nav button.on{color:var(--azul);border-bottom-color:var(--azul);font-weight:600}
+  .badge{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:var(--rojo);color:#fff;font-size:11px;font-weight:700;padding:0 5px;margin-left:6px;text-align:center}
+  .badge.cero{background:var(--ok)}
+  main{padding:18px;max-width:1250px;margin:0 auto}
+  .panel{display:none;background:#fff;border:1px solid var(--borde);border-radius:8px;padding:18px}
+  .panel.on{display:block}
+  h2{margin:0 0 4px;font-size:16px}
+  h3{font-size:14px;margin:22px 0 8px}
+  .hint{color:var(--suave);font-size:12.5px;margin:0 0 14px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{background:var(--azul);color:#fff;text-align:left;padding:8px 9px;font-weight:600;font-size:12px;white-space:nowrap}
+  td{border-bottom:1px solid var(--borde);padding:5px 7px;vertical-align:middle}
+  tbody tr:hover{background:#f8fafd}
+  input[type=text],input[type=number],input[type=date],select,textarea{width:100%;border:1px solid var(--borde);border-radius:5px;padding:6px 7px;font-family:inherit;font-size:13px;background:#fff;color:var(--txt)}
+  input:focus,select:focus,textarea:focus{outline:2px solid #b9cbe8;border-color:var(--azul2)}
+  .dias{display:flex;gap:3px}
+  .dia{width:26px;height:26px;border:1px solid var(--borde);border-radius:5px;background:#fff;cursor:pointer;font-size:11px;font-weight:600;color:var(--suave);padding:0;font-family:inherit}
+  .dia.on{background:var(--azul2);border-color:var(--azul2);color:#fff}
+  .btn{background:var(--azul);color:#fff;border:0;border-radius:6px;padding:9px 15px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500}
+  .btn:hover{background:var(--azul2)}
+  .btn.sec{background:#fff;color:var(--azul);border:1px solid var(--borde)}
+  .btn.sec:hover{background:#eef3fa}
+  .btn.mini{padding:4px 9px;font-size:12px}
+  .btn.ok{background:var(--ok)}
+  .btn.rojo{background:var(--rojo)}
+  .btn.wa{background:var(--wa)} .btn.wa:hover{background:#0f7a40}
+  .btn.del{background:none;color:var(--rojo);border:1px solid var(--borde);padding:3px 8px;font-size:12px;border-radius:5px;cursor:pointer;font-family:inherit}
+  .barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .caja{background:#fbfcfe;border:1px solid var(--borde);border-radius:7px;padding:14px;margin-bottom:16px}
+  .campos{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  .campo{display:flex;flex-direction:column;gap:5px}
+  .campo label{font-size:12px;color:var(--suave);font-weight:600}
+  .campo input,.campo select{min-width:150px}
+  .aviso{border-radius:6px;padding:10px 12px;font-size:13px;margin:12px 0}
+  .aviso.err{background:#fdecee;color:var(--rojo);border:1px solid #f3c3c8}
+  .aviso.ok{background:#e8f6ec;color:var(--ok);border:1px solid #bfe3ca}
+  .aviso.warn{background:#fff4ce;color:var(--ambar);border:1px solid #f0dfa0}
+  #bannerAlertas{margin:0 auto;max-width:1250px;padding:0 18px}
+  .alerta{border-radius:7px;padding:11px 14px;margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+  .alerta.crit{background:#fdecee;border:1px solid #f3c3c8;color:var(--rojo)}
+  .alerta.med{background:#fff4ce;border:1px solid #f0dfa0;color:var(--ambar)}
+  .alerta.bien{background:#e8f6ec;border:1px solid #bfe3ca;color:var(--ok)}
+  .alerta.ot{background:#f3ecfb;border:1px solid #ddc9f0;color:#6b21a8}
+  .alerta .sp{flex:1}
+  .est{display:inline-block;border-radius:11px;padding:2px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .est.pend{background:#fff4ce;color:var(--ambar)}
+  .est.conf{background:#e8f6ec;color:var(--ok)}
+  .est.rech{background:#fdecee;color:var(--rojo)}
+  .est.env{background:#eef3fa;color:var(--azul)}
+  .est.noenv{background:#f1f3f5;color:var(--suave)}
+  .fila-crit td{background:#fdecee}
+  .fila-med td{background:#fffaf0}
+  .fila-ot td{background:#f3ecfb}
+  tr.sep td{background:#1f3864;color:#fff;font-weight:700;font-size:11.5px;letter-spacing:.6px;padding:6px 9px}
+  tr.fila-off td{background:repeating-linear-gradient(45deg,#fdecee,#fdecee 8px,#fbe3e6 8px,#fbe3e6 16px)}
+  .ot{color:#6b21a8}
+  .vacia td{background:#fdecee;color:var(--rojo)}
+  .semSel{min-width:92px;font-weight:700;padding:5px 4px;font-size:12.5px}
+  .semT td{vertical-align:top}
+  .sm{font-size:10.5px;color:var(--suave);margin-top:2px}
+  .cola{border:2px solid var(--azul2);border-radius:8px;padding:16px;background:#f7faff}
+  .cola .quien{font-size:17px;font-weight:700;color:var(--azul)}
+  .cola pre{background:#fff;border:1px solid var(--borde);border-radius:6px;padding:10px;font-size:12.5px;white-space:pre-wrap;max-height:200px;overflow:auto;margin:10px 0}
+  textarea{min-height:100px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .fechaBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#eef3fa;border:1px solid #d3e0f0;border-radius:8px;padding:10px 12px;margin-bottom:16px}
+  .fechaBar .hoy{font-size:16px;font-weight:700;color:var(--azul)}
+  /* ---- Ventana de Terminar día / horas extras ---- */
+  .modal{position:fixed;inset:0;background:rgba(15,22,35,.55);display:none;z-index:900;
+    align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto}
+  .modal.on{display:flex}
+  .modal .box{background:#fff;border-radius:10px;width:100%;max-width:820px;
+    box-shadow:0 18px 50px rgba(0,0,0,.3);overflow:hidden}
+  .modal .top{background:var(--azul);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .modal .top h3{margin:0;font-size:16px;font-weight:600}
+  .modal .top .f{font-size:12.5px;opacity:.8;flex:1}
+  .modal .top .x{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:6px;
+    width:28px;height:28px;font-size:16px;cursor:pointer;font-family:inherit;line-height:1}
+  .modal .cuerpo{padding:16px 18px;max-height:58vh;overflow:auto}
+  .modal .pie{border-top:1px solid var(--borde);background:#fbfcfe;padding:12px 18px;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .modal .pie .tot{flex:1;font-size:14px}
+  .modal .pie .tot b{font-size:17px}
+  .modal table{font-size:13px}
+  .modal td{vertical-align:middle}
+  .otbox{display:flex;gap:4px;align-items:center}
+  .otbox input{width:74px;text-align:center;font-weight:700;font-size:14px}
+  .otbox .btn{padding:5px 8px;font-size:12px}
+  .otchip{display:inline-block;background:#f3ecfb;color:#6b21a8;border:1px solid #ddc9f0;
+    border-radius:11px;padding:2px 9px;font-size:11.5px;font-weight:700}
+  .otchip.cero{background:#f1f3f5;color:var(--suave);border-color:var(--borde)}
+  @media print{
+    body{background:#fff}
+    header,nav,.noimp,.barra,#bannerAlertas,.fechaBar .btn,.modal{display:none!important}
+    main{padding:0;max-width:none}
+    .panel{border:0;padding:0;display:none}
+    .panel.on{display:block}
+    th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚚 Roster de Conductores</h1>
+  <span class="sub">Armas la semana, la envías el domingo y cierras las horas de cada día</span>
+  <span id="estadoGuardado">—</span>
+</header>
+
+<nav>
+  <button data-t="semana" class="on">Semana</button>
+  <button data-t="dia">Día</button>
+  <button data-t="alertas">Alertas <span class="badge cero" id="bdg">0</span></button>
+  <button data-t="ausencias">Ausencias</button>
+  <button data-t="conductores">Conductores</button>
+  <button data-t="consolidado">Consolidado</button>
+  <button data-t="historial">Historial</button>
+  <button data-t="datos">Respaldo</button>
+</nav>
+
+<div id="bannerAlertas"></div>
+<div id="avisoPestanas" style="max-width:1250px;margin:0 auto;padding:0 18px"></div>
+
+<main>
+
+<section class="panel on" id="p-semana">
+<h2>Roster semanal</h2>
+<p class="hint">Se arma y se envía cada domingo. Cada casilla se puede cambiar: hora de entrada, <b>OFF</b>, <b>SICK</b> o <b>VACACIONES</b>.
+  Si cambias algo después de enviarlo, el conductor afectado queda marcado como <b>Cambió – reenviar</b> y solo le mandas a él la actualización.</p>
+<div class="fechaBar noimp">
+  <button class="btn sec mini" onclick="moverSemana(-1)">◂ Semana anterior</button>
+  <input type="date" id="semFecha" style="width:auto" onchange="this.value=lunesDe(this.value);cola=[];render()">
+  <span class="hoy" id="semEtq"></span>
+  <button class="btn sec mini" onclick="moverSemana(1)">Semana siguiente ▸</button>
+  <span style="flex:1"></span>
+  <button class="btn sec mini" onclick="irSemana(0)">Esta semana</button>
+  <button class="btn mini" onclick="irSemana(1)">Próxima semana</button>
+</div>
+<div class="caja noimp"><div class="campos">
+  <div class="campo"><button class="btn" onclick="generarSemana()">Volver a generar la semana</button></div>
+  <div class="campo"><button class="btn sec" onclick="verRotacion()">Ver rotación de roles</button></div>
+  <div class="campo"><button class="btn sec" onclick="copiarSemanaAnterior()">Copiar la semana anterior</button></div>
+  <div class="campo"><label>Mínimo en la mañana</label><input type="number" id="semMinM" min="0" style="min-width:90px;width:90px" onchange="cfg.minM=+this.value||0;guardar();render()"></div>
+  <div class="campo"><label>Mínimo en la tarde</label><input type="number" id="semMinT" min="0" style="min-width:90px;width:90px" onchange="cfg.minT=+this.value||0;guardar();render()"></div>
+  <div class="campo"><button class="btn sec" onclick="exportSemanaHTML()">Descargar roster (imprimir / PDF)</button></div>
+</div>
+<p class="hint" style="margin:10px 0 0">Los <b>fijos</b> (09:00) no se mueven. Los del grupo de las <b>16:00</b> tienen un rol por semana — <b>Tarde</b>, <b>Tarde · E</b> (apoyo de emergencia) o <b>Relevo</b> — y la semana siguiente pasa cada uno al siguiente rol. El <b>relevo</b> toma cada día el puesto de quien libra (hora, zona y E). Cada uno descansa su <b>Día OFF</b> (pestaña Conductores). Las ausencias de <b>Ausencias</b> se respetan.</p></div>
+<div id="semEstado" role="status" aria-live="polite"></div>
+<div id="semTabla" style="overflow-x:auto"></div>
+
+<h3>Enviar el roster a los conductores</h3>
+<div class="caja noimp">
+  <div class="campos">
+    <div class="campo"><label>Código de país</label><input type="text" id="cfgPais" placeholder="356" style="min-width:90px;width:90px" oninput="cfg.pais=this.value.replace(/\D/g,'');guardar()"></div>
+    <div class="campo"><label>WhatsApp a usar</label>
+      <select id="cfgApp" onchange="cfg.app=this.value;guardar()">
+        <option value="wa">WhatsApp Web / Escritorio</option>
+        <option value="api">WhatsApp instalado (app)</option>
+      </select></div>
+    <div class="campo" style="flex:1;min-width:280px"><label>📌 Nota para todos (opcional, se agrega al final del mensaje)</label>
+      <textarea id="semAviso" style="min-height:52px;font-family:inherit" placeholder="Ej: Esta semana hay inventario de linens el jueves."
+        oninput="semEst(semInicio()).aviso=this.value;guardar();pintarCola()"></textarea></div>
+  </div>
+</div>
+<div id="colaOut"></div>
+<div id="semEnvio"></div>
+</section>
+
+<!-- DIA -->
+<section class="panel" id="p-dia">
+  <div class="fechaBar noimp">
+    <button class="btn sec mini" onclick="moverDia(-1)">◂ Anterior</button>
+    <input type="date" id="fDia" style="width:auto" onchange="setDia(this.value)">
+    <span class="hoy" id="etqDia"></span>
+    <button class="btn sec mini" onclick="moverDia(1)">Siguiente ▸</button>
+    <span style="flex:1"></span>
+    <button class="btn sec mini" onclick="setDia(isoHoy())">Hoy</button>
+    <button class="btn mini" onclick="setDia(isoManana())">Mañana</button>
+  </div>
+
+  <div class="caja noimp" id="cajaAcciones">
+    <div class="campos">
+      <div class="campo"><label>Jornada regular (horas)</label>
+        <input type="number" id="fJor" min="1" max="12" step="0.5" onchange="cfg.jornada=+this.value||7;render();guardar()"></div>
+      <div class="campo"><label>Tope de OT en 7 días</label>
+        <input type="number" id="fMaxOt" min="0" step="1" onchange="cfg.maxOt=+this.value||0;render();guardar()"></div>
+      <div class="campo"><button class="btn ok" onclick="finalizarDia()" id="btnFinalizar">🏁 Terminar día</button></div>
+    </div>
+  </div>
+
+  <div id="diaOut"></div>
+</section>
+
+<!-- ALERTAS -->
+<section class="panel" id="p-alertas">
+  <h2>Alertas</h2>
+  <p class="hint">Cobertura incompleta, conductores sin roster o con cambios sin reenviar, días sin cerrar y overtime sobre el tope.</p>
+  <div id="alertasOut"></div>
+</section>
+
+<!-- AUSENCIAS -->
+<section class="panel" id="p-ausencias">
+  <h2>Ausencias programadas</h2>
+  <p class="hint">Deja marcados los días libres de toda la semana. Quien esté marcado no aparece como disponible ese día ni se le puede asignar turno por error.</p>
+  <div id="ausOut"></div>
+</section>
+
+<!-- CONDUCTORES -->
+<section class="panel" id="p-conductores">
+  <h2>Conductores</h2>
+  <p class="hint">La <b>zona habitual</b> se pone sola al armar el día; los que dejes en "todas" quedan vacíos para que elijas.
+    <button class="btn sec mini" onclick="editarZonas()">Editar lista de zonas</button></p>
+  <table>
+    <thead><tr>
+      <th style="width:16%">Drivers Name</th><th style="width:17%">Email</th><th style="width:10%">Teléfono</th>
+      <th style="width:9%">Tipo</th><th style="width:12%">Zona habitual</th><th style="width:5%" title="Puesto o zona fija: no se mueve para cubrir huecos">Fijo</th><th style="width:8%">Día OFF</th><th style="width:5%">Activo</th>
+      <th style="width:15%">Días disponibles</th><th style="width:9%">Hora habitual</th><th></th>
+    </tr></thead>
+    <tbody id="tbC"></tbody>
+  </table>
+  <div class="barra">
+    <button class="btn" onclick="addC()">+ Agregar conductor</button>
+    <button class="btn sec" onclick="togglePeg('pegC')">Pegar desde Excel/Sheets</button>
+  </div>
+  <div class="caja" id="pegC" style="display:none;margin-top:14px">
+    <p class="hint">Columnas: <b>Drivers Name · Email · Teléfono · Tipo · Días disponibles · Hora habitual</b>. Días: <code>TODOS</code> o <code>L,M,X,J,V</code>. Tipo: <code>Full Time</code> o <code>Part Time</code>.</p>
+    <textarea id="txtC" placeholder="Christian Bernal Leiva	cbernal2601@gmail.com	8095550101	Full Time	TODOS	09:00"></textarea>
+    <div class="barra"><button class="btn" onclick="pegarC()">Importar</button></div>
+  </div>
+  <div id="cargaOut"></div>
+</section>
+
+<!-- PLANTILLA -->
+<section class="panel" id="p-plantilla">
+  <h2>Plantilla de salidas</h2>
+  <p class="hint">Las salidas típicas de un día. Al armar el día se copian y de ahí ajustas lo que cambie. La salida se calcula sola a las <b id="jorTxt">7</b> horas de la entrada.</p>
+  <table>
+    <thead><tr><th style="width:14%">Entrada</th><th style="width:14%">Salida</th><th style="width:12%">Cantidad</th><th style="width:26%">Ruta / Zona</th><th style="width:26%">Días que aplica</th><th></th></tr></thead>
+    <tbody id="tbP"></tbody>
+  </table>
+  <div class="barra"><button class="btn" onclick="addP()">+ Agregar salida a la plantilla</button></div>
+</section>
+
+<!-- CONSOLIDADO -->
+<section class="panel" id="p-consolidado">
+  <h2>Consolidado mensual de horas</h2>
+  <p class="hint">Todo el mes en una sola vista: días trabajados, horas regulares y overtime por conductor, listo para nómina.</p>
+  <div class="caja noimp">
+    <div class="campos">
+      <div class="campo"><label>Desde</label><input type="date" id="fDesde" onchange="rDesde=this.value;pintarConsolidado()"></div>
+      <div class="campo"><label>Hasta</label><input type="date" id="fHasta" onchange="rHasta=this.value;pintarConsolidado()"></div>
+      <div class="campo"><label>Atajos</label>
+        <div class="barra" style="margin:0">
+          <button class="btn sec mini" onclick="rangoMes(0)">Este mes</button>
+          <button class="btn sec mini" onclick="rangoMes(-1)">Mes pasado</button>
+          <button class="btn sec mini" onclick="rangoDias(15)">Últimos 15 días</button>
+          <button class="btn sec mini" onclick="rangoDias(30)">Últimos 30 días</button>
+        </div>
+      </div>
+    </div>
+    <div class="barra">
+      <button class="btn" onclick="exportPagoHTML()">Formato de pago 360 Estates (25 al 24)</button>
+      <button class="btn sec" onclick="exportPagoCSV()">Formato de pago en CSV</button>
+      <button class="btn sec" onclick="copiar360Log()">Copiar log para la hoja</button>
+      <button class="btn sec" onclick="copiar360Semana()">Copiar rejilla semanal</button>
+    </div>
+    <div class="barra">
+      <button class="btn sec mini" onclick="exportConsolidadoHTML()">Informe interno (resumen)</button>
+      <button class="btn sec mini" onclick="csv360Log()">Log en CSV</button>
+      <button class="btn sec mini" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+    <p class="hint" style="margin:12px 0 0"><b>Formato de pago:</b> genera una hoja por conductor con el periodo del 25 al 24, columnas Normal Hours / OT Hours / Extra Projects y las líneas de firma, igual que tu Google Sheet.
+    <b>Copiar log</b> te deja las filas listas para pegar en la hoja <i>Fecha / Driver / Entrada / Salida / Horas / OT</i>.</p>
+  </div>
+  <div id="consOut"></div>
+</section>
+
+<!-- HISTORIAL -->
+<section class="panel" id="p-historial">
+  <h2>Historial</h2>
+  <p class="hint">Días ya armados. Sirve para consultar, para repartir la carga de forma pareja y para reportar horas.</p>
+  <div id="histOut"></div>
+</section>
+
+<!-- DATOS -->
+<section class="panel" id="p-datos">
+  <h2>Respaldo</h2>
+  <p class="hint">Todo se guarda solo en este navegador. Descarga un respaldo si cambias de computadora.</p>
+  <div class="grid2">
+    <div class="caja"><h2 style="font-size:14px">Descargar respaldo</h2>
+      <p class="hint">Conductores, plantilla, todos los días, envíos y confirmaciones.</p>
+      <button class="btn" onclick="guardarJSON()">Descargar respaldo (.json)</button></div>
+    <div class="caja"><h2 style="font-size:14px">Restaurar respaldo</h2>
+      <p class="hint">Reemplaza todo lo que hay ahora.</p>
+      <input type="file" id="fileJSON" accept=".json" onchange="cargarJSON(this)"></div>
+  </div>
+  <div class="caja"><h2 style="font-size:14px">Borrar todo</h2>
+    <button class="btn sec" onclick="borrarTodo()">Restablecer a ejemplos</button></div>
+  <div id="avisoAlmacen"></div>
+</section>
+
+</main>
+
+<!-- ===== VENTANA: TERMINAR DÍA / HORAS EXTRAS ===== -->
+<div class="modal" id="modalOT">
+  <div class="box">
+    <div class="top">
+      <h3>🏁 Terminar día</h3>
+      <span class="f" id="modalFecha"></span>
+      <button class="x" onclick="cerrarModalOT()" title="Cancelar">✕</button>
+    </div>
+    <div class="cuerpo" id="modalCuerpo"></div>
+    <div class="pie">
+      <span class="tot" id="modalTotal"></span>
+      <button class="btn sec" onclick="cerrarModalOT()">Cancelar</button>
+      <button class="btn ok" onclick="guardarModalOT()">Guardar y terminar día</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== CONSTANTES ===================== */
+const LETRAS=['L','M','X','J','V','S','D'];
+const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const KEY='rosterDiario.v2';
+const APP_V=6;   // versión de la app que guarda; las versiones viejas no la escriben
+
+let conductores=[], plantilla=[], dias={}, offs={}, semanas={}, fechaAct=null, semAus='';
+const CFG_DEF={pais:'356', app:'wa', desc:10, jornada:7, maxOt:10, minM:4, minT:2, rotModo:'semana', zonas:['Norte','Centro','Sur']};
+let cfg=Object.assign({},CFG_DEF);
+let cola=[], colaIdx=0, colaTipo='wa', almacenOK=true, periodo=7, vista='conductor', rDesde='', rHasta='';
+
+/* ===================== PERSISTENCIA ===================== */
+function guardar(){
+  if(!almacenOK) return;
+  try{
+    localStorage.setItem(KEY, JSON.stringify({conductores,plantilla,dias,offs,semanas,cfg,appV:APP_V,ts:Date.now()}));
+    const d=new Date();
+    document.getElementById('estadoGuardado').textContent='✔ Guardado '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }catch(e){
+    almacenOK=false;
+    document.getElementById('estadoGuardado').textContent='⚠ No se puede guardar';
+    document.getElementById('avisoAlmacen').innerHTML='<div class="aviso err">Este navegador no permite guardar (modo incógnito o restricción del equipo). Usa el respaldo .json.</div>';
+  }
+}
+function cargar(){
+  try{
+    const raw=localStorage.getItem(KEY); if(!raw) return false;
+    const o=JSON.parse(raw);
+    conductores=o.conductores||[]; plantilla=o.plantilla||[]; dias=o.dias||{}; offs=o.offs||{}; semanas=o.semanas||{};
+    cfg=Object.assign({},CFG_DEF, o.cfg||{});
+    if(cfg.pais==='1') cfg.pais='356';   // el '1' era el valor de ejemplo; la operación es en Malta
+    delete cfg.tpl;
+    if(o.ts){ const d=new Date(o.ts);
+      document.getElementById('estadoGuardado').textContent='✔ Guardado '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+    return true;
+  }catch(e){ return false; }
+}
+function borrarTodo(){
+  if(!confirm('¿Borrar conductores, plantilla y todos los días guardados?')) return;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  ejemplo(); semanas={}; cfg=Object.assign({},CFG_DEF); fechaAct=isoManana(); render(); guardar();
+}
+
+/* ===================== EJEMPLO ===================== */
+function ejemplo(){
+  conductores=[
+    {n:'Christian Bernal Leiva', mail:'cbernal2601@gmail.com',           tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Norte'},
+    {n:'Francisco Tinoco',       mail:'Ftinocov@gmail.com',              tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Centro'},
+    {n:'Oscar Ojeda',            mail:'oscarojeda29@hotmail.com',        tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Sur'},
+    {n:'Misael Panqueva',        mail:'Junior432rodriguez@gmail.com',    tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Centro'},
+    {n:'Santiago Lascarro',      mail:'santiagolascarro012@gmail.com',   tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'12:00', zona:''},
+    {n:'Oscar Borja',            mail:'oskr0706@icloud.com',             tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'16:00', zona:''},
+    {n:'Alejandro Vanegas',      mail:'vanegasalejandro005@gmail.com',   tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'16:00', zona:''},
+    {n:'Edwin Valcarcel',        mail:'',                                tipo:'PT', tel:'', act:true, d:LETRAS.slice(), hab:'',      zona:''},
+    {n:'Juan Gomez',             mail:'',                                tipo:'PT', tel:'', act:true, d:LETRAS.slice(), hab:'16:30', zona:''},
+    {n:'Daniel Roman',           mail:'',                                tipo:'PT', tel:'', act:true, d:LETRAS.slice(), hab:'16:00', zona:''}
+  ];
+  plantilla=[
+    {h:'06:00', f:'13:00', req:2, ruta:'Zona Norte', d:['L','M','X','J','V','S']},
+    {h:'08:00', f:'15:00', req:1, ruta:'Zona Este',  d:LETRAS.slice()},
+    {h:'14:00', f:'21:00', req:2, ruta:'Zona Sur',   d:['L','M','X','J','V']}
+  ];
+  dias={};
+}
+
+/* ===================== AJUSTES DE PLANTILLA DE PERSONAL =====================
+   Edwin Valcarcel, Juan Gomez y Daniel Roman son Part Time.
+   Esto corrige los datos que ya estaban guardados en el navegador. */
+const FORZAR_PT=['edwin valcarcel','juan gomez','daniel roman'];
+/* Conductores de puesto fijo: siempre en el mismo lugar/zona. No se mueven para cubrir huecos.
+   Se marcan una sola vez; después se cambia desde la pestaña Conductores (columna Fijo). */
+const FIJOS_INI=['christian bernal leiva','francisco tinoco','oscar ojeda','santiago lascarro'];
+function normalizarTipos(){
+  let cambio=false;
+  /* Solo hay turnos de 09:00 y 16:00: se ajustan la hora habitual y los turnos de hoy en adelante */
+  conductores.forEach(c=>{ if(c.hab&&TURNOS.indexOf(c.hab)<0&&hora(c.hab)!==null){ c.hab=c.fijo?'09:00':turnoDe(c.hab); cambio=true; } });
+  const hoyN=isoHoy();
+  Object.keys(dias).forEach(k=>{
+    if(k<hoyN||dias[k].finalizado||dias[k].cerrado) return;     // el historial de horas pagadas no se toca
+    dias[k].filas.forEach(f=>{
+      if(hora(f.h)===null||TURNOS.indexOf(f.h)>=0) return;
+      const t=turnoDe(f.h), era=f.f===finJornada(f.h);
+      f.h=t; if(era||!f.f) f.f=finJornada(t); cambio=true;
+    });
+  });
+  /* Corrección única: el fijo es Oscar Ojeda, no Oscar Borja */
+  if(!cfg.fijosV2){
+    conductores.forEach(c=>{ const n=(c.n||'').trim().toLowerCase();
+      if(n==='oscar ojeda') c.fijo=true; if(n==='oscar borja') c.fijo=false; });
+    cfg.fijosV2=true; cambio=true;
+  }
+  /* Corrección única: los de las 09:00 son fijos (incluye a Santiago) */
+  if(!cfg.fijosV3){
+    conductores.forEach(c=>{ const n=(c.n||'').trim().toLowerCase();
+      if(n==='santiago lascarro'){ c.fijo=true; if(hora(c.hab)===null||hora(c.hab)>=12) c.hab='09:00'; } });
+    cfg.fijosV3=true; cambio=true;
+  }
+  conductores.forEach(c=>{
+    if(c.fijo===undefined){ c.fijo=FIJOS_INI.indexOf((c.n||'').trim().toLowerCase())>=0; cambio=true; }
+    if(c.offDia===undefined){ const b=SEM_OFF_BASE[(c.n||'').trim().toLowerCase()]; c.offDia=(b===undefined?'':b); cambio=true; }
+    const n=(c.n||'').trim().toLowerCase();
+    if(FORZAR_PT.indexOf(n)>=0 && c.tipo!=='PT'){ c.tipo='PT'; cambio=true; }
+    if(!c.tipo) { c.tipo='FT'; cambio=true; }
+  });
+  return cambio;
+}
+
+/* ===================== FECHAS ===================== */
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isoHoy(){ return iso(new Date()); }
+function isoManana(){ const d=new Date(); d.setDate(d.getDate()+1); return iso(d); }
+function dISO(s){ const p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function fmtF(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }
+function idxDia(isoS){ const d=dISO(isoS).getDay(); return d===0?6:d-1; }   // 0=Lunes
+function letraDia(isoS){ return LETRAS[idxDia(isoS)]; }
+function nombreDia(isoS){ return DIAS[idxDia(isoS)]; }
+function cuandoTxt(isoS){ return isoS===isoHoy()?'hoy':(isoS===isoManana()?'mañana':'del'); }
+function isoMas(isoS,n){ const d=dISO(isoS); d.setDate(d.getDate()+n); return iso(d); }
+
+/* ===================== UTIL ===================== */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function hora(v){ const m=String(v||'').trim().match(/^(\d{1,2})[:.h]?(\d{2})?/); if(!m) return null;
+  const h=+m[1], mi=+(m[2]||0); return (h>23||mi>59)?null:h+mi/60; }
+function hhmm(x){ let h=Math.floor(x)%24,m=Math.round((x-Math.floor(x))*60); if(m===60){m=0;h=(h+1)%24;}
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+function parseDias(v){ const s=String(v||'').trim().toUpperCase();
+  if(!s||s==='TODOS'||s==='TODOS LOS DIAS'||s==='TODOS LOS DÍAS') return LETRAS.slice();
+  const r=s.split(/[,;\/\s]+/).map(x=>x.trim()).filter(x=>LETRAS.indexOf(x)>=0); return r.length?r:LETRAS.slice(); }
+function clave(c){ return (c.n||'').trim().toLowerCase()+'|'+((c.mail||c.id||'')+'').trim().toLowerCase(); }
+function condDe(k){ return conductores.find(c=>clave(c)===k); }
+function telNorm(tel){
+  let t=String(tel||'').replace(/\D/g,''); if(!t) return '';
+  t=t.replace(/^0+/,'');
+  const p=(cfg.pais||'').replace(/\D/g,'');
+  if(p && t.indexOf(p)!==0 && t.length<=10) t=p+t;
+  return t;
+}
+
+/* ===================== MODELO DEL DÍA ===================== */
+function dia(isoS){
+  if(!dias[isoS]) dias[isoS]={filas:[], creado:null};
+  return dias[isoS];
+}
+function D(){ return dia(fechaAct); }
+function setDia(v){ if(!v) return; fechaAct=v; cola=[]; colaIdx=0; render(); }
+function moverDia(n){ setDia(isoMas(fechaAct,n)); }
+
+function generarDia(){
+  if(bloqueado()) return;
+  const d=D();
+  if(d.filas.length && !confirm('Este día ya tiene asignaciones. ¿Rehacerlo desde la plantilla? Se pierden los envíos y confirmaciones de este día.')) return;
+  const letra=letraDia(fechaAct);
+  d.filas = [];
+  plantilla.filter(p=>(p.d||[]).indexOf(letra)>=0).sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0)).forEach(p=>{
+    for(let i=0;i<(p.req||1);i++) d.filas.push({h:p.h, f:p.f, ruta:p.ruta||'', k:'', enviado:null, estado:'pendiente', ts:null, nota:''});
+  });
+  d.creado=Date.now();
+  asignar(true);
+  render(); guardar();
+}
+function reasignarLibres(){ if(bloqueado()) return; asignar(false); render(); guardar(); }
+
+function asignar(desdeCero){
+  const d=D(), letra=letraDia(fechaAct);
+  if(desdeCero) d.filas.forEach(f=>{ f.k=''; f.enviado=null; f.estado='pendiente'; f.ts=null; });
+
+  const ocupados={}; d.filas.forEach(f=>{ if(f.k) ocupados[f.k]=true; });
+  const carga=cargaReciente(fechaAct,7);
+  const finPrev=finesDelDia(isoMas(fechaAct,-1));
+
+  d.filas.slice().sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0)).forEach(f=>{
+    if(f.k) return;
+    const hIni=hora(f.h); if(hIni===null) return;
+    const cand=conductores.filter(c=>{
+      if(!c.act||!(c.n||'').trim()) return false;
+      const k=clave(c);
+      if(ocupados[k]) return false;
+      if(ausDe(k,fechaAct)) return false;            // OFF / SICK / VACACIONES programados
+      if((c.d||[]).indexOf(letra)<0) return false;
+      if(cfg.desc>0 && finPrev[k]!==undefined && (24+hIni)-finPrev[k] < cfg.desc) return false;
+      return true;
+    });
+    if(!cand.length) return;
+    cand.sort((a,b)=>{
+      const ka=clave(a), kb=clave(b);
+      const A=carga[ka]||{dias:0,horas:0,ot:0}, B=carga[kb]||{dias:0,horas:0,ot:0};
+      if(A.dias!==B.dias) return A.dias-B.dias;
+      if(A.ot!==B.ot) return A.ot-B.ot;          // el overtime también se reparte parejo
+      const ha=A.horas, hb=B.horas;
+      if(ha!==hb) return ha-hb;
+      const pa=(hora(a.hab)!==null && Math.abs(hora(a.hab)-hIni)<1)?0:1;
+      const pb=(hora(b.hab)!==null && Math.abs(hora(b.hab)-hIni)<1)?0:1;
+      if(pa!==pb) return pa-pb;
+      return a.n.localeCompare(b.n);
+    });
+    const c=cand[0], k=clave(c);
+    f.k=k; ocupados[k]=true;
+    carga[k]=carga[k]||{dias:0,horas:0,ot:0,reg:0};
+    carga[k].dias++; carga[k].horas+=totalFila(f); carga[k].ot+=otFila(f);
+  });
+}
+function durFila(f){
+  const i=hora(f.h), fi=hora(f.f);
+  if(i===null||fi===null) return 0;
+  let x=fi-i; if(x<=0) x+=24; return x;
+}
+/* Jornada regular = cfg.jornada (7 h). Lo que pase de ahí es overtime.
+   f.otm = overtime escrito a mano (manda sobre el calculado por hora de salida). */
+/* OT_MIN: el overtime empieza a contar desde 0.5 h.
+   Nada por debajo de media hora se paga; a partir de ahí se redondea
+   al bloque de 0.5 h más cercano (0.5, 1, 1.5, 2 ...). */
+const OT_MIN=0.5;
+function redondearOT(x){
+  if(x<OT_MIN) return 0;
+  return Math.round(x/OT_MIN)*OT_MIN;
+}
+function otFila(f){
+  if(f.aus) return 0;
+  if(f.otm!==undefined && f.otm!==null && f.otm!=='') return redondearOT(Math.max(0, +f.otm||0));
+  return redondearOT(Math.max(0, durFila(f)-cfg.jornada));
+}
+function regFila(f){ return f.aus ? 0 : Math.min(durFila(f), cfg.jornada); }
+function totalFila(f){ return regFila(f)+otFila(f); }
+function faltaFila(f){ const d=durFila(f); return d>0 ? Math.max(0, cfg.jornada-d) : 0; }
+function finJornada(hIni){ const i=hora(hIni); return i===null?'' : hhmm(i+cfg.jornada); }
+function nHoras(x){ return (Math.round(x*100)/100).toString().replace(/\.00?$/,''); }
+function finesDelDia(isoS){
+  const out={}; const d=dias[isoS]; if(!d) return out;
+  d.filas.forEach(f=>{ if(!f.k) return;
+    const i=hora(f.h); if(i===null) return;
+    const fin=i+totalFila(f);
+    if(out[f.k]===undefined||fin>out[f.k]) out[f.k]=fin;
+  });
+  return out;
+}
+function cargaReciente(isoS,n){
+  const out={};
+  for(let i=1;i<=n;i++){
+    const d=dias[isoMas(isoS,-i)]; if(!d) continue;
+    d.filas.forEach(f=>{ if(!f.k||f.aus) return;
+      out[f.k]=out[f.k]||{dias:0,horas:0,ot:0,reg:0};
+      out[f.k].dias++; out[f.k].horas+=totalFila(f);
+      out[f.k].ot+=otFila(f); out[f.k].reg+=regFila(f);
+    });
+  }
+  return out;
+}
+function addFila(){ if(bloqueado()) return; D().filas.push({h:'06:00',f:finJornada('06:00'),ruta:'',k:'',enviado:null,estado:'pendiente',ts:null,nota:''}); render(); guardar(); }
+function vaciarDia(){ if(bloqueado()) return; if(!confirm('¿Vaciar todas las salidas de este día?')) return; D().filas=[]; render(); guardar(); }
+/* Guardia: ningún cambio entra si el día ya fue finalizado */
+function bloqueado(){
+  if(D().finalizado){ alert('Este día ya fue finalizado. Usa "Deshacer" en el aviso verde si necesitas corregir algo.'); return true; }
+  return false;
+}
+function setF(i,campo,v){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  if(campo==='h'){
+    // Si la salida estaba en la jornada regular, se mueve con la entrada. Si fue ajustada a mano, se respeta.
+    const eraRegular = f.f===finJornada(f.h);
+    f.h=v;
+    if(eraRegular) f.f=finJornada(v);
+  }else{
+    f[campo]=v;
+    if(campo==='k'){ f.enviado=null; f.estado='pendiente'; }
+  }
+  render(); guardar();
+}
+function resetSalida(i){ if(bloqueado()) return; const f=D().filas[i]; f.f=finJornada(f.h); f.otm=null; render(); guardar(); }
+/* Suma o resta overtime en bloques de media hora moviendo la hora de salida.
+   Nunca baja de la jornada regular: el mínimo es 0 h de OT. */
+function addOT(i,h){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  const ini=hora(f.h); if(ini===null) return;
+  const otActual=Math.max(0, durFila(f)-cfg.jornada);
+  const nuevo=Math.max(0, Math.round((otActual+h)/OT_MIN)*OT_MIN);
+  f.otm=null;
+  f.f=hhmm(ini+cfg.jornada+nuevo);
+  render(); guardar();
+}
+function quitarFila(i){ if(bloqueado()) return; D().filas.splice(i,1); render(); guardar(); }
+
+/* ===================== NAV ===================== */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); document.getElementById('p-'+b.dataset.t).classList.add('on');
+  };
+});
+function ir(t){ document.querySelector('nav button[data-t="'+t+'"]').click(); }
+function togglePeg(id){ const e=document.getElementById(id); e.style.display=e.style.display==='none'?'block':'none'; }
+
+/* ===================== TABLAS BASE ===================== */
+function diasHTML(a,t,i){ return '<div class="dias">'+LETRAS.map(l=>
+  '<button class="dia'+(a.indexOf(l)>=0?' on':'')+'" onclick="togD(\''+t+'\','+i+',\''+l+'\')">'+l+'</button>').join('')+'</div>'; }
+function togD(t,i,l){ const a=t==='c'?conductores[i].d:plantilla[i].d; const p=a.indexOf(l);
+  if(p>=0) a.splice(p,1); else a.push(l); render(); guardar(); }
+function setC(i,c,v){ conductores[i][c]=v; guardar(); }
+function setP(i,c,v){
+  const p=plantilla[i];
+  if(c==='h'){ const eraRegular=p.f===finJornada(p.h); p.h=v; if(eraRegular) p.f=finJornada(v); render(); }
+  else p[c]=v;
+  guardar();
+}
+
+function renderTablas(){
+  /* Los conductores se listan separados: primero Full Time, después Part Time */
+  const filaC=(c,i)=>`
+    <tr>
+      <td><input type="text" value="${esc(c.n)}" oninput="setC(${i},'n',this.value)"></td>
+      <td><input type="text" value="${esc(c.mail||'')}" placeholder="correo@ejemplo.com" oninput="setC(${i},'mail',this.value)"></td>
+      <td><input type="text" value="${esc(c.tel||'')}" placeholder="8095550101" oninput="setC(${i},'tel',this.value)"></td>
+      <td><select onchange="setC(${i},'tipo',this.value);render()">
+            <option value="FT" ${(c.tipo||'FT')==='FT'?'selected':''}>Full Time</option>
+            <option value="PT" ${c.tipo==='PT'?'selected':''}>Part Time</option>
+          </select></td>
+      <td><select onchange="setC(${i},'zona',this.value);render()">${optZonas(c.zona||'')}</select></td>
+      <td style="text-align:center"><input type="checkbox" ${c.fijo?'checked':''} title="Puesto o zona fija" onchange="setC(${i},'fijo',this.checked);render()"></td>
+      <td><select onchange="setC(${i},'offDia',this.value===''?'':+this.value);render()">
+            <option value="" ${c.offDia===''||c.offDia==null?'selected':''}>—</option>
+            ${DIAS.map((n,j)=>`<option value="${j}" ${c.offDia!==''&&c.offDia!=null&&+c.offDia===j?'selected':''}>${n}</option>`).join('')}</select></td>
+      <td style="text-align:center"><input type="checkbox" ${c.act?'checked':''} onchange="setC(${i},'act',this.checked)"></td>
+      <td>${diasHTML(c.d,'c',i)}</td>
+      <td><select onchange="setC(${i},'hab',this.value);render()">${optTurnos(c.hab||'',true)}</select></td>
+      <td><button class="btn del" onclick="conductores.splice(${i},1);render();guardar()">✕</button></td>
+    </tr>`;
+
+  const grupoC=(tipo,titulo)=>{
+    const g=conductores.map((c,i)=>({c,i})).filter(o=>((o.c.tipo||'FT')===tipo));
+    if(!g.length) return '';
+    const act=g.filter(o=>o.c.act).length;
+    return `<tr class="sep"><td colspan="11">${titulo}
+        <span style="font-weight:400;opacity:.75">— ${g.length} en total, ${act} activo${act===1?'':'s'}</span></td></tr>`
+      + g.map(o=>filaC(o.c,o.i)).join('');
+  };
+  document.getElementById('tbC').innerHTML=grupoC('FT','FULL TIME')+grupoC('PT','PART TIME');
+
+  document.getElementById('tbP').innerHTML=plantilla.map((p,i)=>`
+    <tr>
+      <td><select onchange="setP(${i},'h',this.value)" style="font-weight:600">${optHoras(p.h)}</select></td>
+      <td><select onchange="setP(${i},'f',this.value)">${optHoras(p.f)}</select></td>
+      <td><input type="number" min="1" value="${p.req}" oninput="setP(${i},'req',+this.value||1)"></td>
+      <td><input type="text" value="${esc(p.ruta||'')}" oninput="setP(${i},'ruta',this.value)"></td>
+      <td>${diasHTML(p.d,'p',i)}</td>
+      <td><button class="btn del" onclick="plantilla.splice(${i},1);render();guardar()">✕</button></td>
+    </tr>`).join('');
+}
+/* Desplegable de horas en bloques de media hora: 00:00, 00:30, 01:00 … 23:30.
+   Si el valor guardado no cae en la rejilla (ej. 16:45) se agrega igual
+   para no perder el dato. */
+/* Solo existen dos turnos de entrada: 09:00 y 16:00 */
+const TURNOS=['09:00','16:00'];
+function turnoDe(h){ const x=hora(h); return x===null?'09:00':(x<12?'09:00':'16:00'); }
+function optTurnos(sel, vacio){
+  const v=hora(sel)!==null?hhmm(hora(sel)):'';
+  return (vacio?`<option value="" ${!v?'selected':''}>— sin fijar —</option>`:'')
+    +TURNOS.map(t=>`<option value="${t}" ${t===v?'selected':''}>${t}</option>`).join('')
+    +(v&&TURNOS.indexOf(v)<0?`<option value="${v}" selected>${v} (fuera de turno)</option>`:'');
+}
+function optHoras(sel, vacio){
+  const v=String(sel||'').trim();
+  const lista=[];
+  for(let h=0;h<24;h++){ lista.push(hhmm(h)); lista.push(hhmm(h+0.5)); }
+  const norm=(hora(v)!==null)?hhmm(hora(v)):'';
+  if(norm && lista.indexOf(norm)<0) lista.push(norm);
+  lista.sort();
+  let out = vacio ? `<option value="" ${!norm?'selected':''}>— sin fijar —</option>` : '';
+  out += lista.map(t=>`<option value="${t}" ${t===norm?'selected':''}>${t}</option>`).join('');
+  return out;
+}
+function optZonas(sel){
+  return ['<option value="">— todas / sin fijar —</option>']
+    .concat((cfg.zonas||[]).map(z=>`<option value="${esc(z)}" ${z===sel?'selected':''}>${esc(z)}</option>`)).join('');
+}
+function editarZonas(){
+  const v=prompt('Zonas separadas por coma:', (cfg.zonas||[]).join(', '));
+  if(v===null) return;
+  cfg.zonas=v.split(',').map(s=>s.trim()).filter(Boolean);
+  render(); guardar();
+}
+function addC(){ conductores.push({n:'',mail:'',tel:'',tipo:'FT',fijo:false,offDia:'',act:true,d:LETRAS.slice(),hab:'',zona:''}); render(); guardar(); }
+function addP(){ plantilla.push({h:'06:00',f:finJornada('06:00'),req:1,ruta:'',d:LETRAS.slice()}); render(); guardar(); }
+function pegarC(){
+  const txt=document.getElementById('txtC').value.trim(); if(!txt) return; let n=0;
+  txt.split(/\r?\n/).forEach(li=>{
+    const p=li.indexOf('\t')>=0?li.split('\t'):li.split(/\s{2,}/);
+    if(!p[0]||!p[0].trim()||/^nombre$/i.test(p[0].trim())) return;
+    conductores.push({n:(p[0]||'').trim(),mail:(p[1]||'').trim(),tel:(p[2]||'').trim(),
+      tipo:(/part/i.test(p[3]||'')?'PT':'FT'), act:true, d:parseDias(p[4]), hab:(p[5]||'').trim()});
+    n++;
+  });
+  document.getElementById('txtC').value=''; render(); guardar(); alert(n+' conductor(es) importado(s).');
+}
+
+/* ===================== VISTA DEL DÍA ===================== */
+/* ---- asignación por conductor (varios a la vez) ---- */
+function filaDeK(k){ return D().filas.findIndex(f=>f.k===k); }
+/* ---- AUSENCIAS PROGRAMADAS (OFF / SICK / VACACIONES) ----
+   Viven en offs[fecha][clave]. Un conductor con ausencia programada
+   no se puede asignar ese día y no aparece en la lista de disponibles. */
+const AUS_TXT={off:'OFF', sick:'SICK', vac:'VACACIONES'};
+function ausDe(k,isoS){ return (offs[isoS]||{})[k]||null; }
+function setAus(k,isoS,v){
+  if(isoS===fechaAct && bloqueado()) return;
+  if(!v){ if(offs[isoS]) { delete offs[isoS][k]; if(!Object.keys(offs[isoS]).length) delete offs[isoS]; } }
+  else {
+    offs[isoS]=offs[isoS]||{}; offs[isoS][k]=v;
+    const d=dias[isoS];                       // si estaba asignado ese día, se libera
+    if(d){ const i=d.filas.findIndex(f=>f.k===k); if(i>=0) d.filas.splice(i,1); }
+  }
+  semRegenerarDia(isoS);       // en semanas armadas, el relevo y la cobertura se acomodan solos
+  render(); guardar();
+}
+function cicloAus(k,isoS){
+  const v=ausDe(k,isoS);
+  setAus(k,isoS, v===null?'off' : v==='off'?'sick' : v==='sick'?'vac' : null);
+}
+function ausSemana(k,v){
+  for(let i=0;i<7;i++){ setAusSilencio(k, isoMas(semAus,i), v); semRegenerarDia(isoMas(semAus,i)); }
+  render(); guardar();
+}
+function setAusSilencio(k,isoS,v){
+  if(!v){ if(offs[isoS]){ delete offs[isoS][k]; if(!Object.keys(offs[isoS]).length) delete offs[isoS]; } return; }
+  offs[isoS]=offs[isoS]||{}; offs[isoS][k]=v;
+  const d=dias[isoS]; if(d){ const i=d.filas.findIndex(f=>f.k===k); if(i>=0) d.filas.splice(i,1); }
+}
+function moverSemAus(n){ semAus=isoMas(semAus,n*7); render(); }
+function lunesDe(isoS){ return isoMas(isoS, -((dISO(isoS).getDay()+6)%7)); }
+
+function pintarAusencias(){
+  const out=document.getElementById('ausOut');
+  if(!semAus) semAus=lunesDe(isoHoy());
+  const dd=[]; for(let i=0;i<7;i++) dd.push(isoMas(semAus,i));
+  const cab=dd.map((d,i)=>`<th>${DIAS[i].slice(0,3)}<div style="font-weight:400;font-size:10.5px">${dISO(d).getDate()}/${dISO(d).getMonth()+1}</div></th>`).join('');
+  const grupo=(tipo,titulo)=>{
+    const cs=conductores.filter(c=>c.act&&(c.n||'').trim()&&(c.tipo||'FT')===tipo);
+    if(!cs.length) return '';
+    return `<tr class="sep"><td colspan="10">${titulo}</td></tr>`+cs.map(c=>{
+      const k=clave(c);
+      return `<tr><td style="white-space:nowrap"><b>${esc(c.n)}</b></td>`
+        + dd.map(d=>{
+            const v=ausDe(k,d);
+            const col=v==='sick'?'#fdecee':v==='vac'?'#eaf1fb':v==='off'?'#f1f3f5':'#fff';
+            const txt=v?AUS_TXT[v]:'·';
+            const cl=v==='sick'?'#b02a37':v==='vac'?'#1f3864':'#6b7787';
+            return `<td style="text-align:center;padding:2px">
+              <button onclick="cicloAus('${k}','${d}')" title="Clic para cambiar: OFF → SICK → VACACIONES → limpiar"
+                style="width:100%;border:1px solid #d7dde6;border-radius:5px;background:${col};color:${cl};
+                font-size:10.5px;font-weight:700;padding:6px 2px;cursor:pointer;font-family:inherit">${txt}</button></td>`;
+          }).join('')
+        + `<td style="white-space:nowrap">
+             <button class="btn mini sec" onclick="ausSemana('${k}','off')">Toda OFF</button>
+             <button class="btn mini sec" onclick="ausSemana('${k}',null)">Limpiar</button></td></tr>`;
+    }).join('');
+  };
+  out.innerHTML=`
+    <div class="fechaBar noimp">
+      <button class="btn sec mini" onclick="moverSemAus(-1)">◂ Semana anterior</button>
+      <span class="hoy">Semana del ${fmtF(dISO(semAus))} al ${fmtF(dISO(isoMas(semAus,6)))}</span>
+      <button class="btn sec mini" onclick="moverSemAus(1)">Semana siguiente ▸</button>
+      <span style="flex:1"></span>
+      <button class="btn sec mini" onclick="semAus=lunesDe(isoHoy());render()">Esta semana</button>
+    </div>
+    <p class="hint">Haz clic en cada casilla para ir cambiando: <b>OFF</b> → <b>SICK</b> → <b>VACACIONES</b> → vacío.
+      Un conductor marcado no se puede asignar ese día y desaparece de la lista de disponibles.</p>
+    <table><thead><tr><th>Conductor</th>${cab}<th>Semana completa</th></tr></thead>
+      <tbody>${grupo('FT','FULL TIME')}${grupo('PT','PART TIME')}</tbody></table>`;
+}
+
+function togTrabaja(k){ setTrabaja(k, filaDeK(k)>=0 ? 'no' : 'si'); }
+function setTrabaja(k, modo){
+  if(bloqueado()) return;
+  const i=filaDeK(k), d=D();
+  if(modo==='off'||modo==='sick'||modo==='vac'){ setAus(k,fechaAct,modo); return; }
+  setAusSilencio(k,fechaAct,null);              // trabajar o quitar limpia la ausencia
+  if(modo==='no'){
+    if(i>=0){
+      if(d.filas[i].enviado && !confirm('A este conductor ya se le envió su horario. ¿Quitarlo del día?')) return;
+      d.filas.splice(i,1);
+    }
+  }else if(i<0){
+    const c=condDe(k);
+    const h=turnoDe(c&&c.hab);
+    d.filas.push({h:h, f:finJornada(h), ruta:'', k:k, enviado:null, estado:'pendiente', ts:null, nota:''});
+  }
+  render(); guardar();
+}
+function setFK(k,campo,v){ const i=filaDeK(k); if(i>=0) setF(i,campo,v); }
+function marcarDisponibles(){
+  if(bloqueado()) return;
+  const letra=letraDia(fechaAct), d=D();
+  let n=0;
+  conductores.filter(c=>c.act&&(c.n||'').trim()&&(c.d||[]).indexOf(letra)>=0).forEach(c=>{
+    const k=clave(c);
+    if(filaDeK(k)>=0 || ausDe(k,fechaAct)) return;
+    const h=turnoDe(c.hab);
+    d.filas.push({h:h, f:finJornada(h), ruta:'', k:k, enviado:null, estado:'pendiente', ts:null, nota:''});
+    n++;
+  });
+  render(); guardar();
+  if(!n) alert('Todos los disponibles de hoy ya están en el día.');
+}
+function quitarTodos(){
+  if(bloqueado()) return;
+  if(!confirm('¿Quitar a todos los conductores de este día?')) return;
+  D().filas=[]; render(); guardar();
+}
+function horaATodos(){
+  if(bloqueado()) return;
+  const v=prompt('Hora de entrada para TODOS los del día (formato 06:00):','06:00');
+  if(v===null) return;
+  if(hora(v)===null){ alert('Hora inválida.'); return; }
+  D().filas.forEach(f=>{ const era=f.f===finJornada(f.h); f.h=v; if(era) f.f=finJornada(v); });
+  render(); guardar();
+}
+function copiarDiaAnterior(){
+  if(bloqueado()) return;
+  const prev=dias[isoMas(fechaAct,-1)];
+  if(!prev||!prev.filas.length){ alert('El día anterior no tiene asignaciones guardadas.'); return; }
+  if(D().filas.length && !confirm('Se reemplaza lo de este día con la asignación del día anterior. ¿Continuar?')) return;
+  D().filas=prev.filas.map(f=>({h:f.h,f:f.f,ruta:f.ruta,k:f.k,enviado:null,estado:'pendiente',ts:null,nota:''}));
+  D().creado=Date.now();
+  render(); guardar();
+}
+function setVista(v){ vista=v; render(); }
+function barraVista(){
+  return `<div class="barra noimp" style="margin-top:0">
+    <span style="font-size:12px;color:#6b7787;font-weight:600">Vista:</span>
+    <button class="btn mini ${vista==='conductor'?'':'sec'}" onclick="setVista('conductor')">Por conductor</button>
+    <button class="btn mini ${vista==='cierre'?'':'sec'}" onclick="setVista('cierre')">Cierre de horas</button>
+    <span style="flex:1"></span>
+    <button class="btn sec mini" onclick="verSemana(lunesDe(fechaAct))">Cambiar horarios en Semana ▸</button>
+  </div>`;
+}
+
+/* ---- CIERRE: registrar las horas reales (normalmente al día siguiente) ---- */
+function setOTM(i,v){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  f.otm = (v===''||v===null) ? null : Math.max(0,+v||0);
+  render(); guardar();
+}
+/* Botones rápidos de overtime en bloques de media hora */
+function addOTM(i,h){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  const base=(f.otm!==undefined&&f.otm!==null&&f.otm!=='')?+f.otm:otFila(f);
+  f.otm=Math.max(0, Math.round((base+h)/OT_MIN)*OT_MIN);
+  render(); guardar();
+}
+function cerrarDia(){
+  const d=D();
+  if(d.finalizado){ alert('Este día está finalizado. Usa "Deshacer finalización" primero.'); return; }
+  if(!d.filas.filter(f=>f.k).length){ alert('Este día no tiene conductores.'); return; }
+  d.cerrado = !d.cerrado;
+  d.cerradoTs = d.cerrado?Date.now():null;
+  render(); guardar();
+}
+function finalizarDia(){
+  const d=D();
+  if(!d.filas.filter(f=>f.k).length){ alert('Este día no tiene conductores asignados.'); return; }
+
+  /* Reabrir un día ya terminado */
+  if(d.finalizado){
+    if(!confirm('Este día ya está terminado.\n\n¿Reabrirlo para corregir horarios u horas extras?')) return;
+    d.finalizado=false; d.finalizadoTs=null;
+    d.cerrado=false;  d.cerradoTs=null;
+    render(); guardar();
+    return;
+  }
+
+  abrirModalOT();
+}
+
+/* ===================== VENTANA DE HORAS EXTRAS =====================
+   Al terminar el día se abre este formulario con todos los conductores
+   que trabajaron. Ahí se escribe el overtime de cada uno en bloques de
+   media hora. Al guardar, el día queda cerrado y bloqueado. */
+let otTmp={};          // índice de fila -> horas de OT escritas en el formulario
+
+function abrirModalOT(){
+  const d=D();
+  otTmp={};
+  d.filas.forEach((f,i)=>{ if(f.k && !f.aus) otTmp[i]=otFila(f); });
+  document.getElementById('modalFecha').textContent=nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct));
+  document.getElementById('modalOT').classList.add('on');
+  pintarModalOT();
+}
+function cerrarModalOT(){
+  document.getElementById('modalOT').classList.remove('on');
+  otTmp={};
+}
+function setOTTmp(i,v){
+  const x=(v===''||v===null)?0:Math.max(0,+v||0);
+  otTmp[i]=redondearOT(x);
+  pintarModalOT();   // redibuja para que el campo muestre el valor ya redondeado
+}
+function addOTTmp(i,h){
+  otTmp[i]=Math.max(0, redondearOT((otTmp[i]||0)+h));
+  pintarModalOT();
+}
+function otTmpTotal(){
+  return Object.keys(otTmp).reduce((s,i)=>s+(otTmp[i]||0),0);
+}
+function pintarModalOT(soloTotal){
+  const d=D();
+  const idx=Object.keys(otTmp).map(Number)
+    .sort((a,b)=>(hora(d.filas[a].h)||0)-(hora(d.filas[b].h)||0));
+
+  if(!soloTotal){
+    const filas=idx.map(i=>{
+      const f=d.filas[i], c=condDe(f.k), ot=otTmp[i]||0;
+      return `<tr class="${ot>0?'fila-ot':''}">
+        <td><b>${esc(c?c.n:'?')}</b>
+            <div style="font-size:11.5px;color:#6b7787">${esc((c&&c.tipo==='PT')?'Part Time':'Full Time')}${f.ruta?' · '+esc(f.ruta):''}</div></td>
+        <td style="white-space:nowrap">${esc(f.h)} → ${esc(f.f)}</td>
+        <td style="text-align:center">${nHoras(regFila(f))} h</td>
+        <td>
+          <div class="otbox">
+            <button class="btn sec" onclick="addOTTmp(${i},-0.5)" title="Quitar media hora">−</button>
+            <input type="number" min="0" step="0.5" value="${ot?nHoras(ot):''}" placeholder="0"
+                   onchange="setOTTmp(${i},this.value)">
+            <button class="btn sec" onclick="addOTTmp(${i},0.5)" title="Sumar media hora">+</button>
+          </div>
+        </td>
+        <td style="text-align:center"><b>${nHoras(regFila(f)+ot)} h</b></td>
+        <td><input type="text" value="${esc(f.nota||'')}" placeholder="Motivo…"
+                   onchange="D().filas[${i}].nota=this.value"></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('modalCuerpo').innerHTML=`
+      <p class="hint">Escribe las horas extras de cada conductor. El overtime <b>empieza en 0.5 h</b>:
+        menos de media hora no cuenta y todo se ajusta a bloques de media hora.
+        Deja en blanco a quien no hizo horas extras.</p>
+      <table>
+        <thead><tr>
+          <th>Conductor</th><th>Turno</th><th style="text-align:center">Regular</th>
+          <th style="width:170px">Horas extras</th><th style="text-align:center">Total</th><th style="width:170px">Nota</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  }
+
+  const tot=otTmpTotal(), n=idx.filter(i=>(otTmp[i]||0)>0).length;
+  document.getElementById('modalTotal').innerHTML=
+    `Overtime del día: <b class="ot">${nHoras(tot)} h</b> `+
+    `<span class="otchip ${n?'':'cero'}">${n} conductor${n===1?'':'es'}</span>`;
+}
+function guardarModalOT(){
+  const d=D(), tot=otTmpTotal();
+
+  if(!confirm('Terminar '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+'.\n\n'
+    +'Overtime total: '+nHoras(tot)+' h\n\n'
+    +'El día queda bloqueado. Podrás deshacerlo si necesitas corregir.')) return;
+
+  /* Se graba el overtime como valor manual para que mande sobre la hora de salida */
+  Object.keys(otTmp).forEach(i=>{
+    const ot=otTmp[i]||0;
+    d.filas[i].otm = ot>0 ? ot : null;
+  });
+
+  d.finalizado=true;
+  d.finalizadoTs=Date.now();
+  d.finalizadoOt=tot;
+  if(!d.cerrado){ d.cerrado=true; d.cerradoTs=Date.now(); }   // terminar también cierra las horas
+  cerrarModalOT();
+  render(); guardar();
+  alert('✓ Día terminado. Overtime registrado: '+nHoras(tot)+' h.');
+}
+function diasSinCerrar(){
+  const hoy=isoHoy(), out=[];
+  Object.keys(dias).forEach(k=>{
+    if(k>=hoy) return;                                   // solo días ya pasados
+    const d=dias[k];
+    if(d.filas.filter(f=>f.k).length && !d.cerrado) out.push(k);
+  });
+  return out.sort().reverse();
+}
+function pintarDiaCierre(out,d){
+  const asign=d.filas.map((f,i)=>({f,i})).filter(o=>o.f.k&&!o.f.aus)
+    .sort((a,b)=>(hora(a.f.h)||0)-(hora(b.f.h)||0));
+  if(!asign.length){
+    out.innerHTML=barraVista()+'<div class="aviso warn">Este día no tiene conductores asignados.</div>'; return;
+  }
+  const filas=asign.map(o=>{
+    const f=o.f, c=condDe(f.k), ot=otFila(f), manual=(f.otm!==undefined&&f.otm!==null&&f.otm!=='');
+    return `<tr class="${ot>0?'fila-ot':''}">
+      <td><b>${esc(c?c.n:'?')}</b><div style="font-size:11.5px;color:#6b7787">${esc(f.ruta||'')}</div></td>
+      <td>${esc(f.h)}</td>
+      <td>${finJornada(f.h)}</td>
+      <td><input type="text" value="${esc(f.f)}" ${(manual||d.finalizado)?'disabled style="background:#f1f3f5"':''} oninput="setF(${o.i},'f',this.value)"></td>
+      <td><input type="number" min="0" step="0.5" value="${manual?esc(f.otm):''}" placeholder="—" oninput="setOTM(${o.i},this.value)" ${d.finalizado?'disabled':''}>
+          <div style="margin-top:3px;white-space:nowrap">
+            <button class="btn mini sec" onclick="addOTM(${o.i},0.5)" title="Sumar media hora" ${d.finalizado?'disabled':''}>+½</button>
+            <button class="btn mini sec" onclick="addOTM(${o.i},1)" title="Sumar una hora" ${d.finalizado?'disabled':''}>+1</button>
+            <button class="btn mini sec" onclick="setOTM(${o.i},'')" title="Limpiar OT manual" ${d.finalizado?'disabled':''}>↺</button>
+          </div></td>
+      <td>${ot>0?'<b class="ot">'+nHoras(ot)+' h</b>':'0'}</td>
+      <td><b>${nHoras(totalFila(f))} h</b></td>
+      <td><input type="text" value="${esc(f.nota||'')}" placeholder="Motivo del OT…" oninput="D().filas[${o.i}].nota=this.value;guardar()" ${d.finalizado?'disabled':''}></td>
+    </tr>`;}).join('');
+  const totReg=asign.reduce((s,o)=>s+regFila(o.f),0), totOt=asign.reduce((s,o)=>s+otFila(o.f),0);
+
+  out.innerHTML=barraVista()+`
+    ${d.finalizado?`<div class="aviso ok" style="border-left:4px solid var(--ok)">
+      <b>🏁 Día terminado</b> el ${new Date(d.finalizadoTs||Date.now()).toLocaleString()} — overtime total ${nHoras(totOt)} h. Los campos están bloqueados.
+      <button class="btn mini sec" style="margin-left:10px" onclick="finalizarDia()">Deshacer</button></div>`:''}
+    <div class="aviso ${d.cerrado?'ok':'warn'}">
+      ${d.cerrado
+        ? '✔ Día cerrado el '+new Date(d.cerradoTs||Date.now()).toLocaleString()+'. Las horas ya cuentan como definitivas en el consolidado.'
+        : 'Día <b>abierto</b>. Registra la salida real o las horas extra de cada conductor y ciérralo para que quede firme en el consolidado.'}
+    </div>
+    <div class="barra noimp" style="margin-top:0">
+      <button class="btn ${d.cerrado?'sec':''}" onclick="cerrarDia()">${d.cerrado?'Reabrir día':'Cerrar día'}</button>
+      <button class="btn ok" onclick="finalizarDia()">${d.finalizado?'↺ Reabrir día terminado':'🏁 Terminar día'}</button>
+      <button class="btn sec" onclick="exportCSV()">CSV del día</button>
+      <button class="btn sec" onclick="ir('consolidado')">Ver consolidado del mes</button>
+    </div>
+    <p class="hint" style="margin:12px 0 6px">
+      Puedes registrar el overtime de dos formas: escribiendo la <b>salida real</b>, o poniendo directo las <b>horas extra</b>.
+      Si escribes horas extra, ese número manda y la salida se ignora.
+      El overtime <b>empieza en 0.5 h</b>: menos de media hora no cuenta, y de ahí en adelante va en bloques de media hora.
+      &nbsp;|&nbsp; Regulares: <b>${nHoras(totReg)} h</b> · Overtime: <b class="${totOt>0?'ot':''}">${nHoras(totOt)} h</b>
+    </p>
+    <table>
+      <thead><tr><th>Conductor</th><th>Entrada</th><th>Salida regular</th><th>Salida real</th><th>OT directo (h)</th><th>Overtime</th><th>Total pagado</th><th>Nota</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
+
+/* Todo conductor activo que no esté OFF trabaja: se le crea su fila sola. */
+function asegurarFilas(){
+  return;   // los turnos salen solo de la pestaña Semana; la pestaña Día ya no crea ni cambia horarios
+  const d=D(); let cambio=false;
+  if(d.finalizado) return;   // un día finalizado no se toca
+  if(d.semGenerada) return;  // el día viene del roster semanal: manda la semana
+  conductores.filter(c=>c.act&&(c.n||'').trim()).forEach(c=>{
+    const k=clave(c), i=filaDeK(k), a=ausDe(k,fechaAct);
+    if(a){ if(i>=0){ d.filas.splice(i,1); cambio=true; } return; }
+    if(i<0){
+      const h=turnoDe(c.hab);
+      d.filas.push({h:h, f:finJornada(h), ruta:c.zona||'', k:k, enviado:null, estado:'pendiente', ts:null, nota:''});
+      cambio=true;
+    }
+  });
+  if(cambio) guardar();
+}
+function pintarDiaConductores(out,d){
+  if(!d.filas.some(f=>f.k)){
+    out.innerHTML=barraVista()+'<div class="aviso warn">Este día todavía no tiene turnos. Se arma solo al abrir su semana en la pestaña <b>Semana</b>. '
+      +'<button class="btn mini" onclick="verSemana(lunesDe(fechaAct))">Abrir esa semana</button></div>';
+    return;
+  }
+  const finPrev=finesDelDia(isoMas(fechaAct,-1));
+  const carga=cargaReciente(fechaAct,7);
+
+  const todos=conductores.filter(c=>c.act&&(c.n||'').trim()).map(c=>{
+    const k=clave(c);
+    return {c:c, k:k, i:filaDeK(k), aus:ausDe(k,fechaAct)};
+  });
+  const noProg=todos.filter(o=>!o.aus&&o.i<0&&(o.c.tipo||'FT')==='FT');
+  const lista=todos.filter(o=>o.aus||o.i>=0).sort((a,b)=>{
+    if(!!a.aus!==!!b.aus) return a.aus?1:-1;
+    if(!a.aus&&!b.aus) return (hora(d.filas[a.i].h)||0)-(hora(d.filas[b.i].h)||0);
+    return a.c.n.localeCompare(b.c.n);
+  });
+
+  const pintaFila=(o)=>{
+    const x=carga[o.k]||{dias:0,ot:0};
+    if(o.aus){
+      const col=o.aus==='sick'?'#b02a37':(o.aus==='vac'?'#1f3864':'#6b7787');
+      return `<tr class="fila-off">
+        <td><b style="color:${col}">${esc(o.c.n)}</b><div style="font-size:11.5px;color:#6b7787">${esc(o.c.mail||'')}</div></td>
+        <td colspan="4" style="font-weight:800;letter-spacing:.5px;color:${col}">${AUS_TXT[o.aus]}
+          <span style="font-weight:400;color:#6b7787"> — no trabaja hoy, no cuenta horas</span>
+</td>
+        <td>${x.dias} d · ${nHoras(x.ot)} h OT</td></tr>`;
+    }
+    const f=d.filas[o.i];
+    const ot=otFila(f), falta=faltaFila(f);
+    const hIni=hora(f.h);
+    let corto=false;
+    if(cfg.desc>0 && finPrev[o.k]!==undefined && hIni!==null) corto=((24+hIni)-finPrev[o.k])<cfg.desc;
+    return `<tr class="${ot>0?'fila-ot':(corto?'fila-med':'')}">
+      <td><b>${esc(o.c.n)}</b><div style="font-size:11.5px;color:#6b7787">${esc(o.c.mail||o.c.tel||'')}</div>
+          ${corto?'<div style="font-size:11px;color:#9a6700">⚠ descanso corto</div>':''}</td>
+      <td style="font-weight:700;font-size:14px">${esc(f.h)}</td>
+      <td><select onchange="setFK('${o.k}','f',this.value)" ${d.finalizado?'disabled':''} style="${d.finalizado?'background:#f1f3f5;cursor:not-allowed':''}">${optHoras(f.f)}</select>
+          <div style="font-size:11px;color:#6b7787">regular: ${finJornada(f.h)}</div></td>
+      <td>${ot>0?'<b class="ot">+'+nHoras(ot)+' h</b>':(falta>0?'<span style="color:#9a6700">−'+nHoras(falta)+' h</span>':'—')}
+          <div style="margin-top:3px;white-space:nowrap">
+            <button class="btn mini sec" onclick="addOT(${o.i},-0.5)" title="Quitar media hora" ${d.finalizado?'disabled':''}>−½</button>
+            <button class="btn mini sec" onclick="addOT(${o.i},0.5)" title="Sumar media hora" ${d.finalizado?'disabled':''}>+½</button>
+            <button class="btn mini sec" onclick="addOT(${o.i},1)" title="Sumar una hora" ${d.finalizado?'disabled':''}>+1h</button>
+            <button class="btn mini sec" onclick="resetSalida(${o.i})" title="Volver a jornada regular" ${d.finalizado?'disabled':''}>↺</button></div></td>
+      <td>${f.ruta?'<b>'+esc(f.ruta)+'</b>':'<span style="color:#6b7787">—</span>'}${f.nota?'<div style="font-size:11px;color:#1e7e34">'+esc(f.nota)+'</div>':''}
+          ${o.c.zona?'<div style="font-size:11px;color:#6b7787">habitual: '+esc(o.c.zona)+'</div>':'<div style="font-size:11px;color:#6b7787">flexible</div>'}</td>
+      <td>${x.dias} d · ${nHoras(x.ot)} h OT</td>
+</tr>`;
+  };
+
+  const grupo=(tipo,titulo)=>{
+    const g=lista.filter(o=>(o.c.tipo||'FT')===tipo);
+    if(!g.length) return '';
+    const n=g.filter(o=>!o.aus).length;
+    return `<tr class="sep"><td colspan="6">${titulo} <span style="font-weight:400;opacity:.75">— ${n} de ${g.length} trabajando</span></td></tr>`
+      + g.map(pintaFila).join('');
+  };
+  const filas=grupo('FT','FULL TIME')+grupo('PT','PART TIME');
+
+  const trabajan=d.filas.filter(f=>f.k).length;
+  const totReg=d.filas.reduce((s,f)=>s+regFila(f),0), totOt=d.filas.reduce((s,f)=>s+otFila(f),0);
+  const sinCond=d.filas.filter(f=>!f.k).length;
+
+  const nOff=lista.filter(o=>o.aus).length;
+  const totOtFinal=d.filas.reduce((s,f)=>s+otFila(f),0);
+  out.innerHTML=barraVista()+`
+    ${d.finalizado?'<div class="aviso ok" style="border-left:4px solid var(--ok)"><b>🏁 Día terminado</b> — Cambios bloqueados. Overtime total: '+nHoras(totOtFinal)+' h. <button class="btn mini sec" onclick="finalizarDia()" style="margin-left:auto">Deshacer</button></div>':''}
+    <div class="barra noimp">
+      <button class="btn" onclick="verSemana(lunesDe(fechaAct))">Ver / cambiar en Semana</button>
+      <button class="btn ok" onclick="finalizarDia()">${d.finalizado?'↺ Reabrir día terminado':'🏁 Terminar día'}</button>
+      <span style="flex:1"></span>
+      <button class="btn sec" onclick="copiarDia()">Copiar lista</button>
+      <button class="btn sec" onclick="exportCSV()">CSV</button>
+      <button class="btn sec" onclick="window.print()">Imprimir</button>
+    </div>
+    <p class="hint" style="margin:12px 0 6px">
+      <b>${trabajan}</b> trabajan${nOff?' · <b style="color:#b02a37">'+nOff+' ausentes</b>':''}
+      &nbsp;|&nbsp; Regulares: <b>${nHoras(totReg)} h</b> · Overtime: <b class="${totOt>0?'ot':''}">${nHoras(totOt)} h</b>
+      ${noProg.length?'<br>No programados este día: '+noProg.map(o=>esc(o.c.n)).join(', ')+' — si alguno debe trabajar, ponle la hora en la pestaña <b>Semana</b>.':''}
+    </p>
+    <table>
+      <thead><tr><th>Conductor</th><th style="width:95px">Entrada</th><th style="width:115px">Salida</th>
+      <th style="width:105px">Overtime</th><th style="width:150px">Zona</th><th style="width:105px">Últimos 7 días</th>
+</tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <p class="hint" style="margin-top:10px">Esta pestaña <b>no cambia horarios</b>: muestra el día tal como quedó en <b>Semana</b> y sirve para el cierre. Registra aquí el <b>overtime</b> (<b>+½</b> / <b>+1h</b> / <b>−½</b>, en bloques de media hora) y pulsa <b>Terminar día</b>. Para cambiar una hora, un OFF, SICK o vacaciones, hazlo en <b>Semana</b> o en <b>Ausencias</b>.</p>`;
+}
+
+function pintarDia(){
+  const d=D(), out=document.getElementById('diaOut');
+  document.getElementById('fDia').value=fechaAct;
+  document.getElementById('etqDia').textContent=nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct));
+  document.getElementById('fJor').value=cfg.jornada;
+  document.getElementById('fMaxOt').value=cfg.maxOt;
+  /* Botón Finalizar + bloqueo visual de las cajas de acciones */
+  const btnF=document.getElementById('btnFinalizar');
+  btnF.textContent=d.finalizado?'↺ Reabrir día terminado':'🏁 Terminar día';
+  btnF.className=d.finalizado?'btn sec':'btn ok';
+  const cA=document.getElementById('cajaAcciones');
+  [cA].forEach(el=>{ if(!el) return;
+    el.style.opacity=d.finalizado?'0.55':'';
+    el.querySelectorAll('input,select,textarea,button').forEach(x=>{
+      if(x.id==='btnFinalizar') return;            // el de finalizar siempre activo
+      x.disabled=!!d.finalizado;
+    });
+  });
+
+  if(vista==='conductor'){ pintarDiaConductores(out,d); return; }
+  if(vista==='cierre'){ pintarDiaCierre(out,d); return; }
+  vista='conductor'; pintarDiaConductores(out,d); return;
+
+  if(!d.filas.length){
+    out.innerHTML=barraVista()+'<div class="aviso warn">Este día no tiene salidas. Usa <b>Armar día con la plantilla</b>, <b>Copiar del día anterior</b>, o cambia a la vista <b>Por conductor</b>.</div>';
+    return;
+  }
+  const finPrev=finesDelDia(isoMas(fechaAct,-1));
+  const orden=d.filas.map((f,i)=>({f:f,i:i})).sort((a,b)=>(hora(a.f.h)||0)-(hora(b.f.h)||0));
+  const opts=(sel)=>['<option value="">— sin asignar —</option>'].concat(
+      conductores.filter(c=>c.act&&(c.n||'').trim()).map(c=>{
+        const k=clave(c);
+        return `<option value="${esc(k)}" ${k===sel?'selected':''}>${esc(c.n)}</option>`;})).join('');
+
+  const filas=orden.map(o=>{
+    const f=o.f, i=o.i, c=f.k?condDe(f.k):null;
+    const hIni=hora(f.h);
+    let corto=false;
+    if(f.k && cfg.desc>0 && finPrev[f.k]!==undefined && hIni!==null) corto=((24+hIni)-finPrev[f.k])<cfg.desc;
+    const ot=otFila(f), falta=faltaFila(f);
+    const celdaOT = ot>0 ? '<b class="ot">+'+nHoras(ot)+' h</b>'
+                    : (falta>0 ? '<span style="color:#9a6700">−'+nHoras(falta)+' h</span>' : '—');
+    return `<tr class="${!f.k?'vacia':(ot>0?'fila-ot':(corto?'fila-med':''))}">
+      <td><select onchange="setF(${i},'h',this.value)" style="font-weight:600">${optTurnos(f.h)}</select></td>
+      <td><select onchange="setF(${i},'f',this.value)">${optHoras(f.f)}</select>
+          <div style="font-size:11px;color:#6b7787">regular: ${finJornada(f.h)}</div></td>
+      <td>${nHoras(regFila(f))}</td>
+      <td>${celdaOT}</td>
+      <td><input type="text" value="${esc(f.ruta)}" oninput="setF(${i},'ruta',this.value)"></td>
+      <td><select onchange="setF(${i},'k',this.value)">${opts(f.k)}</select>
+          ${corto?'<div style="font-size:11px;color:#9a6700">⚠ descanso corto</div>':''}
+</td>
+      <td style="white-space:nowrap">
+        <button class="btn mini sec" onclick="addOT(${i},-0.5)" title="Quitar media hora">−½</button>
+        <button class="btn mini sec" onclick="addOT(${i},0.5)" title="Sumar media hora de overtime">+½</button>
+        <button class="btn mini sec" onclick="addOT(${i},1)" title="Sumar 1 hora de overtime">+1h</button>
+        <button class="btn mini sec" onclick="resetSalida(${i})" title="Volver a jornada regular">↺</button>
+        <button class="btn del" onclick="quitarFila(${i})">🗑</button>
+      </td></tr>`;}).join('');
+
+  const asignados=d.filas.filter(f=>f.k).length, huecos=d.filas.length-asignados;
+  const totReg=d.filas.reduce((s,f)=>s+regFila(f),0), totOt=d.filas.reduce((s,f)=>s+otFila(f),0);
+  const conOt=d.filas.filter(f=>f.k&&otFila(f)>0);
+  out.innerHTML=barraVista()+`
+    <div class="barra noimp" style="margin-top:0">
+      <button class="btn" onclick="verSemana(lunesDe(fechaAct))">Ver roster de la semana</button>
+      <button class="btn sec" onclick="copiarDia()">Copiar lista del día</button>
+      <button class="btn sec" onclick="exportCSV()">CSV para nómina</button>
+      <button class="btn sec" onclick="window.print()">Imprimir</button>
+    </div>
+    <p class="hint" style="margin:12px 0 6px">
+      ${d.filas.length} salidas · ${asignados} asignadas${huecos?' · <b style="color:#b02a37">'+huecos+' sin conductor</b>':''}
+      &nbsp;|&nbsp; Horas regulares: <b>${nHoras(totReg)}</b> ·
+      Overtime: <b class="${totOt>0?'ot':''}">${nHoras(totOt)} h</b>${conOt.length?' ('+conOt.length+' conductor'+(conOt.length>1?'es':'')+')':''}
+    </p>
+    <table>
+      <thead><tr><th>Entrada</th><th>Salida real</th><th>Reg.</th><th>Overtime</th><th>Ruta / Zona</th><th>Conductor</th><th>Acción</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <p class="hint" style="margin-top:10px">La salida se calcula sola a las <b>${cfg.jornada} horas</b> de la entrada. Si escribes una salida más tarde, la diferencia entra como overtime automáticamente,
+      redondeada a bloques de <b>media hora</b> (menos de 0.5 h no cuenta). Los botones <b>−½ / +½ / +1h</b> lo ajustan directo.</p>`;
+}
+/* ===================== ROSTER SEMANAL =====================
+   La semana es la fuente del horario: cada casilla escribe en dias[fecha].filas
+   (turnos) y en offs[fecha] (OFF / SICK / VACACIONES). El estado del envío
+   de cada semana vive en semanas[lunes]:
+     env[clave]  = {ts, firma}   -> qué horario se le mandó
+     conf[clave] = firma         -> confirmó ese horario
+   Si la firma actual es distinta a la enviada, el conductor queda en "Cambió".
+=============================================================== */
+
+function normN(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase(); }
+function nomCorto(n){ return String(n||'').trim().split(/\s+/).slice(0,2).join(' '); }
+function primerNombre(n){ return String(n||'').trim().split(/\s+/)[0]; }
+function ddmm(d){ const x=dISO(d); return String(x.getDate()).padStart(2,'0')+'/'+String(x.getMonth()+1).padStart(2,'0'); }
+
+/* --- semana visible --- */
+function semInicio(){
+  const el=document.getElementById('semFecha');
+  if(!el.value) el.value=lunesDe(isoMas(isoHoy(),3));   // de viernes a domingo abre la semana siguiente
+  return lunesDe(el.value);
+}
+function moverSemana(n){ document.getElementById('semFecha').value=isoMas(semInicio(),7*n); cola=[]; render(); }
+function irSemana(n){ document.getElementById('semFecha').value=isoMas(lunesDe(isoHoy()),7*n); cola=[]; render(); }
+function verSemana(l){ document.getElementById('semFecha').value=l; cola=[]; render(); ir('semana'); }
+function semDiasDe(l){ return Array.from({length:7},(_,j)=>isoMas(l,j)); }
+function semCond(){
+  const a=conductores.map((c,i)=>({c,i})).filter(o=>o.c.act&&(o.c.n||'').trim());
+  return a.filter(o=>(o.c.tipo||'FT')==='FT');   // los Part Time no entran en el roster semanal
+}
+function semFila(k,d){ return dias[d]?dias[d].filas.find(f=>f.k===k)||null:null; }
+function semValor(k,d){ const a=ausDe(k,d); if(a) return a; const f=semFila(k,d); return f?f.h:''; }
+function semCreada(l){ return semDiasDe(l).some(d=>dias[d]&&dias[d].filas.some(f=>f.k)); }
+function semTiene(k,l){ return semDiasDe(l).some(d=>semFila(k,d)); }
+
+/* --- editar una casilla --- */
+function semSetI(ci,d,v){
+  const c=conductores[ci]; if(!c) return;
+  const k=clave(c);
+  if(dias[d]&&dias[d].finalizado){
+    alert('El '+nombreDia(d)+' '+fmtF(dISO(d))+' ya está terminado. Reábrelo desde la pestaña Día si necesitas corregirlo.');
+    render(); return;
+  }
+  const day=dia(d); const eraGen=!!day.semGenerada; day.semGenerada=true;
+  const antes=ausDe(k,d);
+  if(offs[d]){ delete offs[d][k]; if(!Object.keys(offs[d]).length) delete offs[d]; }
+  if(eraGen&&(AUS_TXT[v]||antes)){
+    /* cambia una ausencia: se marca y se rehace el día para que el relevo / la cobertura se acomoden solos */
+    if(AUS_TXT[v]){ offs[d]=offs[d]||{}; offs[d][k]=v; }
+    semRegenerarDia(d);
+    if(v&&!AUS_TXT[v]){ const f=semFila(k,d); if(f&&f.h!==v){ const era=f.f===finJornada(f.h); f.h=v; if(era) f.f=finJornada(v); } }
+    render(); guardar(); return;
+  }
+  const i=day.filas.findIndex(f=>f.k===k);
+  if(AUS_TXT[v]){
+    if(i>=0) day.filas.splice(i,1);
+    offs[d]=offs[d]||{}; offs[d][k]=v;
+  }else if(!v){
+    if(i>=0) day.filas.splice(i,1);
+  }else if(i>=0){
+    const f=day.filas[i], era=f.f===finJornada(f.h);
+    f.h=v; if(era) f.f=finJornada(v);
+  }else{
+    day.filas.push({h:v,f:finJornada(v),ruta:c.zona||'',k,enviado:null,estado:'pendiente',ts:null,nota:''});
+  }
+  render(); guardar();
+}
+
+/* --- cobertura del día --- */
+function semCobertura(d){
+  const fs=(dias[d]?dias[d].filas:[]).filter(f=>f.k&&condDe(f.k)&&!ausDe(f.k,d));
+  const m=fs.filter(f=>{const h=hora(f.h);return h!==null&&h<12;}).length;
+  const t=fs.filter(f=>{const h=hora(f.h);return h!==null&&h>=12;}).length;
+  const mm=semMin(d,'M'), mt=semMin(d,'T');
+  return {m,t,mm,mt,fm:Math.max(0,mm-m),ft:Math.max(0,mt-t)};
+}
+/* Mínimo del día: el general (cfg) salvo que ese día se haya aceptado trabajar con menos. */
+function semMin(d,x){ const v=dias[d]&&dias[d]['min'+x]; return (v!==undefined&&v!==null)?v:(cfg['min'+x]||0); }
+function semMinAjustado(d){ return !!dias[d]&&((dias[d].minM!==undefined&&dias[d].minM!==null)||(dias[d].minT!==undefined&&dias[d].minT!==null)); }
+function semLibres(d){
+  return conductores.filter(c=>{
+    if(!c.act||!(c.n||'').trim()||c.tipo==='PT'||c.fijo) return false;
+    const k=clave(c), a=ausDe(k,d);
+    if(a==='sick'||a==='vac'||semFila(k,d)) return false;
+    return true;   // la disponibilidad la dan el Día OFF y Ausencias
+  }).map(c=>nomCorto(c.n)+(ausDe(clave(c),d)==='off'?' (OFF)':''));
+}
+/* ---- Cubrir huecos (vacaciones, sick, OFF extra) ----
+   Orden de preferencia para cubrir:
+   1) Part Time disponible ese día (no le quita el descanso a nadie).
+   2) Full Time con OFF ese día y menos días trabajados en la semana.
+   Nunca se propone a alguien que ya tiene 6 días en la semana: el 7.º día seguido no entra. */
+const SEM_MAX_DIAS=6;
+function semDiasTrab(k,l){ return semDiasDe(l).filter(d=>semFila(k,d)).length; }
+function semCandidatos(d){
+  const l=lunesDe(d);
+  return conductores.map((c,ci)=>({c,ci})).filter(o=>{
+    const c=o.c; if(!c.act||!(c.n||'').trim()||c.tipo==='PT'||c.fijo) return false;
+    const k=clave(c), a=ausDe(k,d);
+    if(a==='sick'||a==='vac'||semFila(k,d)) return false;
+    return true;   // la disponibilidad la dan el Día OFF y Ausencias
+  }).map(o=>{
+    const k=clave(o.c), n=semDiasTrab(k,l);
+    return Object.assign(o,{off:ausDe(k,d)==='off', n, ok:n<SEM_MAX_DIAS});
+  }).sort((a,b)=>(b.ok-a.ok)||(a.n-b.n)||a.c.n.localeCompare(b.c.n));
+}
+/* Flexibles de la tarde que ese día podrían pasar a la mañana (el turno de tarde se queda con uno menos). */
+function semMovibles(d){
+  return conductores.map((c,ci)=>({c,ci})).filter(o=>{
+    const c=o.c; if(!c.act||c.tipo==='PT'||c.fijo) return false;
+    const f=semFila(clave(c),d); if(!f||ausDe(clave(c),d)) return false;
+    const h=hora(f.h); return h!==null&&h>=12;
+  });
+}
+function semMoverManana(ci,d){
+  if(dias[d]&&dias[d].finalizado){ alert('Ese día ya está terminado.'); return; }
+  const c=conductores[ci], f=semFila(clave(c),d); if(!f) return;
+  const cb=semCobertura(d), aus=semAusentesTxt(d), h=semHoraTurno(d,'M');
+  if(!confirm(nombreDia(d)+' '+ddmm(d)+': '+c.n+' pasa de la tarde a la mañana ('+h+').\n\nQueda: '+(cb.m+1)+' en la mañana y '+(cb.t-1)+' en la tarde.\n\n¿Continuar?')) return;
+  f.h=h; f.f=finJornada(h); f.otm=null;
+  f.nota=(f.nota?f.nota+' ':'')+'Pasa a la mañana'+(aus?' para cubrir a '+aus:'')+'.';
+  f.semCubre=aus||'hueco';
+  if(f.semApoyo) f.semApoyo=false;   // deja de ser el apoyo de emergencia de la tarde ese día
+  if(semZonaAusente(d)) f.ruta=semZonaAusente(d);
+  dia(d).minT=Math.min(cb.t-1, semMin(d,'T'));   // la tarde con uno menos queda acordada ese día
+  render(); guardar();
+}
+function semAusentesTxt(d){
+  return Object.keys(offs[d]||{}).filter(k=>(offs[d][k]==='vac'||offs[d][k]==='sick')&&condDe(k))
+    .map(k=>primerNombre(condDe(k).n)).join(' y ');
+}
+/* Zona que deja libre el ausente (si era de puesto fijo, quien lo cubre toma su zona). */
+function semZonaAusente(d){
+  const k=Object.keys(offs[d]||{}).find(k=>(offs[d][k]==='vac'||offs[d][k]==='sick')&&condDe(k)&&condDe(k).fijo&&condDe(k).zona);
+  return k?condDe(k).zona:'';
+}
+function semHoraTurno(d,turno){
+  if(turno==='T') return '16:00';
+  const hs=(dias[d]?dias[d].filas:[]).map(f=>f.h).filter(h=>{const x=hora(h);return x!==null&&x<12;});
+  return hs.length?hs.sort((a,b)=>hs.filter(x=>x===b).length-hs.filter(x=>x===a).length)[0]:'09:00';
+}
+function semCubrirSilencio(ci,d,turno){
+  const c=conductores[ci], k=clave(c), day=dia(d), h=semHoraTurno(d,turno), aus=semAusentesTxt(d);
+  day.semGenerada=true;
+  if(offs[d]){ delete offs[d][k]; if(!Object.keys(offs[d]).length) delete offs[d]; }
+  const i=day.filas.findIndex(f=>f.k===k); if(i>=0) day.filas.splice(i,1);
+  day.filas.push({h,f:finJornada(h),ruta:semZonaAusente(d)||c.zona||'',k,enviado:null,estado:'pendiente',ts:null,
+    nota:'Cubre'+(aus?' a '+aus:' hueco')+'.',semCubre:aus||'hueco'});
+}
+function semCubrir(ci,d,turno){
+  if(dias[d]&&dias[d].finalizado){ alert('Ese día ya está terminado.'); return; }
+  const o=semCandidatos(d).find(x=>x.ci===ci);
+  if(o&&!o.ok&&!confirm(o.c.n+' ya tiene '+o.n+' días esta semana. Con este serían '+(o.n+1)+' días sin descanso.\n\n¿Asignarlo de todas formas?')) return;
+  if(o&&o.off&&o.ok&&!confirm(o.c.n+' tiene OFF ese día. Si lo pones a trabajar pierde su descanso (quedaría con '+(o.n+1)+' días).\n\n¿Continuar?')) return;
+  semCubrirSilencio(ci,d,turno); render(); guardar();
+}
+function semAceptarMenos(d){
+  const cb=semCobertura(d), day=dia(d);
+  if(!confirm(nombreDia(d)+' '+ddmm(d)+': trabajar con '+cb.m+' en la mañana y '+cb.t+' en la tarde (en lugar de '+cb.mm+' y '+cb.mt+').\n\nSolo aplica a ese día. ¿Confirmas?')) return;
+  day.minM=Math.min(cb.m,cb.mm); day.minT=Math.min(cb.t,cb.mt); day.semGenerada=true;
+  render(); guardar();
+}
+function semMinRestaurar(d){ if(dias[d]){ dias[d].minM=null; dias[d].minT=null; } render(); guardar(); }
+function semCubrirTodo(){
+  const l=semInicio(); let puestos=[], quedan=[];
+  semDiasDe(l).forEach(d=>{
+    if(dias[d]&&dias[d].finalizado) return;
+    ['M','T'].forEach(turno=>{
+      let falta=semCobertura(d)['f'+turno.toLowerCase()];
+      while(falta>0){
+        const cand=semCandidatos(d).filter(o=>o.ok);
+        if(!cand.length){ quedan.push(nombreDia(d)+' '+ddmm(d)+' ('+(turno==='M'?'mañana':'tarde')+')'); break; }
+        semCubrirSilencio(cand[0].ci,d,turno);
+        puestos.push(DIAS3[idxDia(d)]+' '+ddmm(d)+': '+nomCorto(cand[0].c.n)+(cand[0].off?' (tenía OFF)':'')+' — '+(turno==='M'?'mañana':'tarde'));
+        falta--;
+      }
+    });
+  });
+  render(); guardar();
+  document.getElementById('semEstado').innerHTML=
+    (puestos.length?'<div class="aviso ok"><b>Huecos cubiertos ('+puestos.length+')</b><br>'+puestos.map(esc).join('<br>')+'<br><span style="font-size:12px">Revisa la propuesta: puedes cambiar cualquier casilla a mano.</span></div>':'')
+    +(quedan.length?'<div class="aviso err"><b>Sin nadie disponible</b> (todos ya tienen 6 días o están ausentes): '+quedan.map(esc).join(', ')
+      +'. Decide entre pedirle a alguien un 7.º día (botones del aviso de cobertura) o aceptar ese día con menos personal.</div>':'')
+    +(!puestos.length&&!quedan.length?'<div class="aviso ok">No hay huecos que cubrir esta semana.</div>':'');
+}
+function txtFalta(cb){
+  return [cb.fm?cb.fm+' en la mañana':'', cb.ft?cb.ft+' en la tarde':''].filter(Boolean).join(' y ');
+}
+
+/* --- crear la semana --- */
+function aplicarPlan(inicio,plan,ok){
+  const est=document.getElementById('semEstado');
+  const bloq=p=>{ const d=dias[p.fecha]; return !!(d&&(d.finalizado||d.cerrado)); };
+  const saltados=plan.filter(bloq).map(p=>DIAS3[idxDia(p.fecha)]+' '+ddmm(p.fecha));
+  if(saltados.length===7){ est.innerHTML='<div class="aviso err">Todos los días de esta semana ya están cerrados o terminados.</div>'; return; }
+  if(semCreada(inicio) && !confirm('Esta semana ya tiene turnos. ¿Reemplazarlos?\n\nLos SICK y VACACIONES marcados se mantienen.')) return;
+  plan.filter(p=>!bloq(p)).forEach(p=>{
+    dias[p.fecha]=Object.assign({},dias[p.fecha]||{},{filas:p.filas,creado:Date.now(),semGenerada:true,genV:GEN_V,
+      minM:p.minM!=null?p.minM:null,minT:p.minT!=null?p.minT:null});
+    const o=offs[p.fecha]||{};
+    Object.keys(o).forEach(k=>{ if(o[k]==='off') delete o[k]; });
+    Object.assign(o,p.aus);
+    if(Object.keys(o).length) offs[p.fecha]=o; else delete offs[p.fecha];
+  });
+  cola=[]; guardar(); render();
+  est.innerHTML='<div class="aviso ok">'+ok+(saltados.length?'<br>No se tocaron (cerrados o terminados): '+saltados.join(', ')+'.':'')+'</div>';
+}
+/* --- generar la semana con rotación automática ---
+   Reglas:
+   · Fijos (Christian, Francisco, Borja…): siempre a su hora habitual y en su zona.
+   · Cada Full Time tiene un día OFF fijo (columna "Día OFF" en Conductores).
+   · Los flexibles rellenan lo que falta para llegar al mínimo de mañana y de tarde.
+     Cuando un fijo está OFF / SICK / VACACIONES, el flexible que entra a la mañana
+     toma su zona (relevo). El que queda de último en la tarde es el apoyo de emergencia (E).
+   · Quién va a la mañana, quién releva y quién es E rota entre los flexibles:
+       modo "semana": cambia cada semana (cada uno estable dentro de su semana).
+       modo "diaria": se reparte día a día para igualar mañanas, tardes y E.
+   · SICK / VACACIONES / OFF ya marcados en Ausencias se respetan. */
+const ROT_BASE='2026-10-19';                       // semana 0 de la rotación
+const SEM_OFF_BASE={'christian bernal leiva':3,'francisco tinoco':5,'oscar ojeda':2,'misael panqueva':4,
+                    'santiago lascarro':1,'oscar borja':6,'alejandro vanegas':0};
+const DIAS3=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+function modN(a,n){ return ((a%n)+n)%n; }
+function semIdx(l){ return Math.round((dISO(l)-dISO(ROT_BASE))/(7*864e5)); }
+function horaFija(c){ return turnoDe(c.hab); }
+
+/* Roles de los que rotan (grupo de las 16:00). Cada semana cada uno tiene UN rol
+   y la semana siguiente pasa al siguiente rol del ciclo:
+     T = tarde 16:00 · E = tarde 16:00 + apoyo de emergencia · R = relevo
+   El RELEVO toma cada día el puesto exacto (hora, zona y E) de quien esté OFF,
+   SICK o de VACACIONES. Los fijos (09:00) no se mueven. */
+const ROL_TXT={T:'Tarde 16:00',E:'Tarde 16:00 · E',R:'Relevo'};
+const ROL_BASE={'misael panqueva':'T','oscar borja':'R','alejandro vanegas':'E'};  // semana del 19/10
+function semRoles(l){
+  const rot=semCond().map(o=>o.c).filter(c=>!c.fijo), n=rot.length, w=semIdx(l);
+  const nT=Math.max(1,cfg.minT||2);
+  /* ciclo: T…, E, R, R… (los que sobran también relevan) */
+  const ciclo=[]; for(let i=0;i<nT-1;i++) ciclo.push('T'); ciclo.push('E'); while(ciclo.length<n) ciclo.push('R');
+  /* posición base de cada uno: la de ROL_BASE si existe, si no la siguiente libre */
+  const usado={}, pos={};
+  rot.forEach(c=>{ const r=ROL_BASE[normN(c.n)], i=r?ciclo.findIndex((x,j)=>x===r&&!usado[j]):-1; if(i>=0){ pos[clave(c)]=i; usado[i]=1; } });
+  rot.forEach(c=>{ if(pos[clave(c)]!==undefined) return; const i=ciclo.findIndex((x,j)=>!usado[j]); pos[clave(c)]=i; usado[i]=1; });
+  const roles={}; rot.forEach(c=>{ roles[clave(c)]=ciclo[modN(pos[clave(c)]+w,n)]; });
+  return {rot,roles};
+}
+
+function semPlanAuto(l,soloMarcados){   // soloMarcados: el OFF lo dicen las ausencias ya guardadas (rehacer un día)
+  const cs=semCond().map(o=>o.c), {rot,roles}=semRoles(l), avisos=[];
+  const offDia={};
+  cs.forEach(c=>{
+    const k=clave(c), marcado=[0,1,2,3,4,5,6].find(j=>ausDe(k,isoMas(l,j))==='off');
+    offDia[k]= marcado!==undefined ? marcado : (c.offDia!==''&&c.offDia!=null ? +c.offDia : null);
+    if(offDia[k]===null) avisos.push(c.n+' no tiene día OFF definido (pestaña Conductores)');
+  });
+  const rep={}; cs.forEach(c=>{ const o=offDia[clave(c)]; if(o!==null) (rep[o]=rep[o]||[]).push(nomCorto(c.n)); });
+  Object.keys(rep).forEach(j=>{ if(rep[j].length>1) avisos.push('Comparten OFF el '+DIAS[j]+': '+rep[j].join(' y ')+' — ese día el relevo no alcanza para los dos'); });
+
+  /* puesto base de cada uno */
+  const puesto=c=>{
+    if(c.fijo){ const h=horaFija(c); return {h,zona:c.zona||'',e:false}; }
+    const r=roles[clave(c)];
+    return r==='R'?null:{h:'16:00',zona:c.zona||'',e:r==='E'};
+  };
+  const plan=[];
+  for(let j=0;j<7;j++){
+    const d=isoMas(l,j), filas=[], aus={}, huecos=[];
+    const mk=(c,p,extra)=>Object.assign({h:p.h,f:finJornada(p.h),ruta:p.zona,k:clave(c),enviado:null,estado:'pendiente',ts:null,
+      nota:p.e?'Apoyo de emergencia desde el turno de tarde.':'',semApoyo:!!p.e},extra||{});
+    const trabaja=c=>{
+      const k=clave(c), a=ausDe(k,d);
+      if(a){ aus[k]=a; return false; }
+      if(!soloMarcados&&offDia[k]===j){ aus[k]='off'; return false; }
+      return true;   // la disponibilidad la dan el Día OFF y Ausencias
+    };
+    const relevos=[];
+    cs.forEach(c=>{
+      const p=puesto(c), ok=trabaja(c);
+      if(!p){ if(ok) relevos.push(c); return; }
+      if(ok) filas.push(mk(c,p));
+      else huecos.push({c,p,motivo:aus[clave(c)]||'off'});
+    });
+    /* Quién cubre (una sola persona por cada tipo de ausencia):
+       · OFF → solo el RELEVO de la semana.
+       · VACACIONES / SICK → siempre la misma persona: la de la tarde con E (si ella falta, la de Tarde),
+         que pasa a la mañana cuando el puesto es de mañana.
+       · Siempre 4 en la mañana: si aún queda un puesto de mañana vacío, lo toma quien quede libre. */
+    const usados=new Set();
+    const ord=(a,b)=>((hora(a.p.h)||0)-(hora(b.p.h)||0))||(a.p.e-b.p.e);      // mañana primero
+    const cubrir=(c,hz)=>{
+      const n=hz.c.n, off=hz.motivo==='off';
+      const ex={h:hz.p.h,f:finJornada(hz.p.h),ruta:hz.p.zona||c.zona||'',semApoyo:!!hz.p.e,
+        semRelevo:off?n:'',semCubre:off?'':primerNombre(n),
+        nota:(off?'Relevo de ':'Cubre a ')+n+(off?'':' ('+AUS_TXT[hz.motivo]+')')+(hz.p.zona?' · zona '+hz.p.zona:'')+'.'+(hz.p.e?' Apoyo de emergencia.':'')};
+      const f=filas.find(x=>x.k===clave(c));
+      if(f) Object.assign(f,ex); else filas.push(mk(c,{h:hz.p.h,zona:'',e:false},ex));
+      usados.add(clave(c)); huecos.splice(huecos.indexOf(hz),1);
+    };
+    const enTarde=c=>filas.some(f=>f.k===clave(c)&&hora(f.h)>=12);
+    const cubreAus=rot.filter(c=>roles[clave(c)]==='E').concat(rot.filter(c=>roles[clave(c)]==='T'));
+    /* 1) el relevo cubre el OFF del día */
+    relevos.forEach(r=>{ const hz=huecos.filter(h=>h.motivo==='off').sort(ord)[0]; if(hz) cubrir(r,hz); });
+    /* 2) vacaciones / SICK de un puesto de mañana: la persona designada */
+    huecos.filter(h=>h.motivo!=='off'&&hora(h.p.h)<12).sort(ord).forEach(hz=>{
+      const c=cubreAus.find(c=>!usados.has(clave(c))&&enTarde(c)); if(c) cubrir(c,hz);
+    });
+    /* 3) siempre 4 en la mañana: lo que quede lo toma el relevo libre o alguien de la tarde (primero E) */
+    huecos.filter(h=>hora(h.p.h)<12).sort(ord).forEach(hz=>{
+      const c=relevos.find(r=>!usados.has(clave(r)))
+        || rot.filter(c=>!usados.has(clave(c))&&enTarde(c)).sort((a,b)=>(roles[clave(b)]==='E')-(roles[clave(a)]==='E'))[0];
+      if(c) cubrir(c,hz);
+    });
+    /* 4) relevo que quedó libre: cubre lo que falte de la tarde o apoya en la mañana */
+    relevos.filter(r=>!usados.has(clave(r))).forEach(r=>{
+      const hz=huecos.slice().sort(ord)[0];
+      if(hz){ cubrir(r,hz); return; }
+      const tN=filas.filter(f=>hora(f.h)>=12).length, hayE=filas.some(f=>f.semApoyo);
+      if(tN<(cfg.minT||0)) filas.push(mk(r,{h:'16:00',zona:r.zona||'',e:!hayE},{nota:'Relevo: refuerza la tarde.'+(!hayE?' Apoyo de emergencia.':'')}));
+      else filas.push(mk(r,{h:'09:00',zona:r.zona||'',e:false},{nota:'Relevo sin puesto que cubrir: apoyo general.'}));
+    });
+    const vivos=filas.filter(f=>!aus[f.k]);
+    const m=vivos.filter(f=>hora(f.h)<12).length, t=vivos.filter(f=>hora(f.h)>=12).length;
+    const red=(m<(cfg.minM||0)||t<(cfg.minT||0));
+    if(red) avisos.push(DIAS[j]+' '+ddmm(d)+': queda con '+m+' en la mañana y '+t+' en la tarde (no hay a quién más poner sin quitar un OFF)');
+    plan.push({fecha:d,filas,aus,minM:red?Math.min(cfg.minM||0,m):null,minT:red?Math.min(cfg.minT||0,t):null});
+  }
+  return {plan,avisos,roles,rot};
+}
+/* Rehace un solo día de una semana ya armada (cuando se marca o quita una ausencia). */
+function semRegenerarDia(d){
+  const day=dias[d]; if(!day||!day.semGenerada||day.finalizado||day.cerrado) return false;
+  const p=semPlanAuto(lunesDe(d),true).plan[idxDia(d)];
+  day.filas=p.filas; day.minM=p.minM; day.minT=p.minT; day.genV=GEN_V;
+  const o=offs[d]||{}; Object.keys(o).forEach(k=>{ if(o[k]==='off'&&!p.aus[k]) delete o[k]; });
+  Object.assign(o,p.aus); if(Object.keys(o).length) offs[d]=o; else delete offs[d];
+  return true;
+}
+/* Una semana de hoy en adelante que todavía no tiene turnos se arma sola al abrirla. */
+/* Versión del generador. Los días que no fueron armados por esta versión (datos de versiones
+   anteriores, turnos sueltos, "cubre hueco" viejos) se rehacen solos al abrir la semana.
+   Los SICK / VACACIONES / OFF marcados se conservan. Los días pasados no se tocan. */
+const GEN_V=3;
+function autoSemana(){
+  const el=document.getElementById('semFecha'); if(!el) return;
+  const l=semInicio(), hoy=isoHoy();
+  if(l<lunesDe(hoy)||!semCond().some(o=>!o.c.fijo)) return;
+  const viejo=d=>{ const x=dias[d]; return !x||!x.filas.some(f=>f.k)||x.genV!==GEN_V; };
+  const rehacer=semDiasDe(l).filter(d=>d>=hoy&&viejo(d)&&!(dias[d]&&dias[d].finalizado&&d<=hoy));
+  if(!rehacer.length) return;
+  const r=semPlanAuto(l);
+  r.plan.filter(p=>rehacer.indexOf(p.fecha)>=0).forEach(p=>{
+    const prev=dias[p.fecha]||{};
+    dias[p.fecha]=Object.assign({},prev,{filas:p.filas,creado:Date.now(),semGenerada:true,genV:GEN_V,
+      minM:p.minM!=null?p.minM:null,minT:p.minT!=null?p.minT:null,
+      cerrado:false,cerradoTs:null,finalizado:false,finalizadoTs:null});   // un día futuro no puede estar cerrado
+    const o=offs[p.fecha]||{};
+    Object.keys(o).forEach(k=>{ if(o[k]==='off') delete o[k]; });
+    Object.assign(o,p.aus);
+    if(Object.keys(o).length) offs[p.fecha]=o; else delete offs[p.fecha];
+  });
+  cola=[]; guardar();
+  const est=document.getElementById('semEstado');
+  if(est) est.innerHTML='<div class="aviso ok">Semana armada automáticamente'+(rehacer.length<7?' ('+rehacer.map(d=>DIAS3[idxDia(d)]).join(', ')+')':'')
+    +'. Solo cambia lo que necesites.'+(r.avisos.length?'<br><span style="color:#9a6700">⚠ '+r.avisos.map(esc).join('<br>⚠ ')+'</span>':'')+'</div>';
+}
+function generarSemana(){
+  const ini=semInicio(), cs=semCond();
+  const est=document.getElementById('semEstado');
+  if(!cs.length){ est.innerHTML='<div class="aviso err">No hay conductores Full Time activos.</div>'; return; }
+  if(!cs.some(o=>!o.c.fijo)){ est.innerHTML='<div class="aviso err">Todos están marcados como fijos: no hay quién rote.</div>'; return; }
+  const r=semPlanAuto(ini);
+  const res=r.rot.map(c=>'<b>'+esc(nomCorto(c.n))+'</b>: '+ROL_TXT[r.roles[clave(c)]]).join(' · ');
+  aplicarPlan(ini,r.plan,'Semana generada. Roles de esta semana — '+res
+    +(r.avisos.length?'<br><span style="color:#9a6700">⚠ '+r.avisos.map(esc).join('<br>⚠ ')+'</span>':''));
+}
+/* Vista previa de los roles en las próximas 6 semanas */
+function verRotacion(){
+  const l0=semInicio(), sems=[0,1,2,3,4,5].map(n=>isoMas(l0,7*n)), rot=semRoles(l0).rot;
+  const col={T:'#fff7e6',E:'#f3ecfb',R:'#e8f6ec'};
+  document.getElementById('semEstado').innerHTML=`<div class="caja"><b>Rotación de roles — próximas ${sems.length} semanas</b>
+    <p class="sm" style="margin:4px 0 8px">Los fijos (09:00) no aparecen porque no rotan. Vista previa: no guarda nada.</p>
+    <div style="overflow-x:auto"><table><thead><tr><th>Conductor</th><th>OFF</th>${sems.map(l=>`<th>Semana ${ddmm(l)}</th>`).join('')}</tr></thead>
+    <tbody>${rot.map(c=>`<tr><td><b>${esc(nomCorto(c.n))}</b></td><td>${c.offDia!==''&&c.offDia!=null?DIAS3[+c.offDia]:'—'}</td>${sems.map(l=>{
+      const r=semRoles(l).roles[clave(c)]; return `<td style="background:${col[r]};text-align:center;font-weight:600">${ROL_TXT[r]}</td>`;}).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="barra"><button class="btn sec mini" onclick="document.getElementById('semEstado').innerHTML=''">Cerrar</button></div></div>`;
+}
+function copiarSemanaAnterior(){
+  const ini=semInicio(), prev=isoMas(ini,-7);
+  if(!semCreada(prev)){ document.getElementById('semEstado').innerHTML='<div class="aviso warn">La semana anterior no tiene turnos para copiar.</div>'; return; }
+  const plan=[];
+  for(let j=0;j<7;j++){
+    const d=isoMas(ini,j), dp=isoMas(prev,j), filas=[], aus={};
+    semCond().map(o=>o.c).forEach(c=>{
+      const k=clave(c), a=ausDe(k,d);
+      if(a){ aus[k]=a; return; }
+      const fp=semFila(k,dp);
+      if(fp) filas.push({h:fp.h,f:finJornada(fp.h),ruta:fp.ruta||'',k,enviado:null,estado:'pendiente',ts:null,
+                         nota:fp.nota||'',semApoyo:!!fp.semApoyo,semRelevo:fp.semRelevo||''});
+      else if(ausDe(k,dp)==='off') aus[k]='off';  // los SICK / VACACIONES de la semana pasada no se copian
+    });
+    plan.push({fecha:d,filas,aus});
+  }
+  aplicarPlan(ini,plan,'Semana copiada de la anterior. Los SICK y VACACIONES de la semana pasada no se copian: esas casillas quedan vacías para que decidas.');
+}
+
+/* --- estado de envío --- */
+function semEst(l){ return semanas[l]||(semanas[l]={env:{},conf:{},aviso:''}); }
+function semEstR(l){ return semanas[l]||{env:{},conf:{},aviso:''}; }
+/* La firma solo usa la entrada y las ausencias: el overtime que se anota después no obliga a reenviar. */
+function semFirma(k,l){ return semDiasDe(l).map(d=>{ const a=ausDe(k,d), f=semFila(k,d); return a?a:(f?f.h:''); }).join('|'); }
+function semStatus(c,l){
+  const k=clave(c), e=semEstR(l), env=e.env[k];
+  if(!env) return 'sin';
+  if(env.firma!==semFirma(k,l)) return 'cambio';
+  return e.conf[k]===env.firma?'conf':'env';
+}
+function semDiasCambiados(c,l){
+  const env=semEstR(l).env[clave(c)]; if(!env) return [];
+  const a=env.firma.split('|'), b=semFirma(clave(c),l).split('|');
+  return b.map((x,j)=>x!==a[j]?j:-1).filter(j=>j>=0);
+}
+function semLinea(k,d){
+  const a=ausDe(k,d), f=semFila(k,d);
+  if(a) return AUS_TXT[a];
+  if(!f) return 'Libre';
+  return f.h+' a '+f.f+(f.semRelevo?' (relevo de '+nomCorto(f.semRelevo)+(f.ruta?', zona '+f.ruta:'')+')':'')+(f.semCubre&&f.semCubre!=='hueco'?' (cubres a '+f.semCubre+(f.ruta?', zona '+f.ruta:'')+')':'')+(f.semApoyo?' · apoyo de emergencia':'');
+}
+function semMsg(c,l){
+  const k=clave(c), dd=semDiasDe(l), cambio=semStatus(c,l)==='cambio', cam=cambio?semDiasCambiados(c,l):[];
+  let t=(cambio?'*ACTUALIZACIÓN DE HORARIO*\n\n':'')
+    +'Hola '+primerNombre(c.n)+', tu horario de la semana del '+ddmm(dd[0])+' al '+ddmm(dd[6])+':\n\n'
+    +dd.map((d,j)=>'• '+DIAS3[j]+' '+ddmm(d)+': '+semLinea(k,d)+(cam.indexOf(j)>=0?'  ⬅ cambió':'')).join('\n');
+  const av=(semEstR(l).aviso||'').trim();
+  if(av) t+='\n\n📌 '+av;
+  return t+'\n\nRespóndeme OK para confirmar. Si tienes algún inconveniente, avísame lo antes posible.';
+}
+function semTextoGrupo(l){
+  const dd=semDiasDe(l);
+  let t='*ROSTER DRIVERS · '+ddmm(dd[0])+' al '+ddmm(dd[6])+'*\n';
+  dd.forEach((d,j)=>{
+    t+='\n*'+DIAS[j].toUpperCase()+' '+ddmm(d)+'*\n';
+    const porH={};
+    (dias[d]?dias[d].filas:[]).filter(f=>f.k&&condDe(f.k)&&!ausDe(f.k,d))
+      .sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0))
+      .forEach(f=>{ (porH[f.h]=porH[f.h]||[]).push(nomCorto(condDe(f.k).n)+(f.semApoyo?' (E)':'')); });
+    Object.keys(porH).sort().forEach(h=>{ t+=h+' — '+porH[h].join(', ')+'\n'; });
+    ['off','sick','vac'].forEach(a=>{
+      const n=Object.keys(offs[d]||{}).filter(k=>offs[d][k]===a&&condDe(k)&&condDe(k).act).map(k=>nomCorto(condDe(k).n));
+      if(n.length) t+=AUS_TXT[a]+' — '+n.join(', ')+'\n';
+    });
+  });
+  const av=(semEstR(l).aviso||'').trim();
+  if(av) t+='\n📌 '+av+'\n';
+  return t+'\n(E) = apoyo de emergencia';
+}
+function urlWA(tel,txt){
+  return cfg.app==='api'
+    ? 'https://api.whatsapp.com/send?'+(tel?'phone='+tel+'&':'')+'text='+encodeURIComponent(txt)
+    : 'https://wa.me/'+(tel||'')+'?text='+encodeURIComponent(txt);
+}
+function semEnviar(ci,avanzar){
+  const c=conductores[ci], l=semInicio(), t=telNorm(c.tel);
+  if(!t){ alert(c.n+' no tiene teléfono. Complétalo en la pestaña Conductores.'); return; }
+  window.open(urlWA(t,semMsg(c,l)),'_blank');
+  semEst(l).env[clave(c)]={ts:Date.now(),firma:semFirma(clave(c),l)};
+  if(avanzar) colaIdx++;
+  render(); guardar();
+}
+function semCopiar(ci){
+  const c=conductores[ci], l=semInicio(), txt=semMsg(c,l);
+  const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); }catch(e){ prompt('Copia manualmente:',txt); }
+  document.body.removeChild(ta);
+  if(confirm('Mensaje de '+c.n+' copiado.\n\n¿Lo marco como enviado?')){
+    semEst(l).env[clave(c)]={ts:Date.now(),firma:semFirma(clave(c),l)}; render(); guardar();
+  }
+}
+function semConfirmar(ci){
+  const c=conductores[ci], l=semInicio(), k=clave(c), e=semEst(l);
+  if(!e.env[k]){ alert('Primero envíale el roster a '+c.n+'.'); return; }
+  if(semStatus(c,l)==='cambio'){ alert('El horario de '+c.n+' cambió después del envío. Reenvíale la actualización y luego marca la confirmación.'); return; }
+  e.conf[k]=(e.conf[k]===e.env[k].firma)?null:e.env[k].firma;
+  render(); guardar();
+}
+function semGrupoCopiar(){ copiar(semTextoGrupo(semInicio()),'Roster de la semana copiado. Pégalo en el grupo de drivers.'); }
+function semGrupoWA(){ window.open(urlWA('',semTextoGrupo(semInicio())),'_blank'); }
+function iniciarColaSem(){
+  const l=semInicio();
+  const p=semCond().filter(o=>semTiene(clave(o.c),l)&&['sin','cambio'].indexOf(semStatus(o.c,l))>=0);
+  const sinTel=p.filter(o=>!telNorm(o.c.tel));
+  cola=p.filter(o=>telNorm(o.c.tel)).map(o=>o.i); colaIdx=0;
+  if(sinTel.length) alert('Sin teléfono, no entran en el envío: '+sinTel.map(o=>o.c.n).join(', ')+'.\nCompleta el teléfono en Conductores o usa "Copiar".');
+  if(!cola.length){ if(!sinTel.length) alert('Todos ya tienen su roster de esta semana al día.'); return; }
+  render();
+  document.getElementById('colaOut').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function pintarCola(){
+  const out=document.getElementById('colaOut'); if(!out) return;
+  if(!cola.length){ out.innerHTML=''; return; }
+  if(colaIdx>=cola.length){
+    out.innerHTML='<div class="aviso ok">Envío terminado: '+cola.length+' conductor(es). Marca <b>✓</b> a medida que te respondan OK.</div>'
+      +'<div class="barra"><button class="btn sec" onclick="cola=[];render()">Cerrar</button></div>'; return;
+  }
+  const ci=cola[colaIdx], c=conductores[ci], l=semInicio(), st=semStatus(c,l);
+  out.innerHTML=`<div class="cola">
+    <div style="font-size:12px;color:#6b7787">Enviando ${colaIdx+1} de ${cola.length}${st==='cambio'?' · <b style="color:#9a6700">actualización</b>':''}</div>
+    <div class="quien">${esc(c.n)}</div>
+    <div style="font-size:12.5px;color:#6b7787">+${esc(telNorm(c.tel))}</div>
+    <pre>${esc(semMsg(c,l))}</pre>
+    <div class="barra" style="margin-top:0">
+      <button class="btn wa" onclick="semEnviar(${ci},true)">Abrir WhatsApp y siguiente ▸</button>
+      <button class="btn sec" onclick="colaIdx++;render()">Saltar</button>
+      <button class="btn sec" onclick="cola=[];render()">Detener</button>
+    </div></div>`;
+}
+
+/* --- pintar la rejilla --- */
+const SEM_COL={off:['#f1f3f5','#6b7787'],sick:['#fdecee','#b02a37'],vac:['#eaf1fb','#1f3864']};
+function optSem(v){
+  return `<option value="" ${!v?'selected':''}>—</option>`
+    +['off','sick','vac'].map(a=>`<option value="${a}" ${v===a?'selected':''}>${AUS_TXT[a]}</option>`).join('')
+    +TURNOS.map(t=>`<option value="${t}" ${v===t?'selected':''}>${t}</option>`).join('')
+    +(v&&!AUS_TXT[v]&&TURNOS.indexOf(v)<0?`<option value="${v}" selected>${v} ⚠</option>`:'');
+}
+function pintarSemana(){
+  const out=document.getElementById('semTabla'); if(!out) return;
+  const l=semInicio(), dd=semDiasDe(l), lHoy=lunesDe(isoHoy());
+  document.getElementById('semFecha').value=l;
+  document.getElementById('semEtq').textContent='Del '+fmtF(dISO(l))+' al '+fmtF(dISO(dd[6]))
+    +(l===lHoy?' · esta semana':(l===isoMas(lHoy,7)?' · próxima semana':''));
+  document.getElementById('semMinM').value=cfg.minM;
+  document.getElementById('semMinT').value=cfg.minT;
+  const av=document.getElementById('semAviso');
+  if(av&&document.activeElement!==av) av.value=semEstR(l).aviso||'';
+  if(!semCreada(l)){
+    out.innerHTML='<div class="aviso warn">Esta semana todavía no tiene turnos. Usa <b>Generar semana</b> o <b>Copiar la semana anterior</b>.</div>';
+    pintarSemEnvio(); return;
+  }
+  const cs=semCond(), hoy=isoHoy();
+
+  /* avisos de cobertura */
+  const faltas=dd.map(d=>({d,cb:semCobertura(d)})).filter(o=>o.cb.fm||o.cb.ft);
+  const sinProg=[];
+  const fila=(o)=>{
+    const c=o.c, k=clave(c), cam=semStatus(c,l)==='cambio'?semDiasCambiados(c,l):[];
+    let nd=0, nh=0;
+    const celdas=dd.map((d,j)=>{
+      const v=semValor(k,d), f=semFila(k,d), fin=dias[d]&&dias[d].finalizado;
+      if(f){ nd++; nh+=totalFila(f); }
+      const h=hora(v);
+      let bg='#fff', col='#1c2430', borde='#d7dde6';
+      if(AUS_TXT[v]){ bg=SEM_COL[v][0]; col=SEM_COL[v][1]; }
+      else if(h!==null&&h>=12){ bg='#fff7e6'; }
+      else if(!v&&(c.tipo||'FT')==='FT'){ borde='#b02a37'; col='#b02a37'; sinProg.push(c.n+' ('+DIAS3[j]+')'); }
+      if(cam.indexOf(j)>=0) borde='#9a6700';
+      return `<td style="padding:3px;${d===hoy?'background:#f7faff;':''}">
+        <select class="semSel" style="background:${bg};color:${col};border-color:${borde};${cam.indexOf(j)>=0?'border-width:2px;':''}"
+          onchange="semSetI(${o.i},'${d}',this.value)" ${fin?'disabled title="Día terminado"':''}>${optSem(v)}</select>
+        ${f?`<div class="sm">hasta ${esc(f.f)}${f.semApoyo?' · <b style="color:#6b21a8">E</b>':''}</div>`:''}
+        ${f&&f.semRelevo?`<div class="sm">releva a ${esc(primerNombre(f.semRelevo))}</div>`:''}
+        ${f&&f.semCubre?`<div class="sm" style="color:#1e7e34">cubre ${f.semCubre==='hueco'?'hueco':'a '+esc(f.semCubre)}${f.ruta?' · '+esc(f.ruta):''}</div>`:''}
+      </td>`;
+    }).join('');
+    return `<tr><td style="white-space:nowrap"><b>${esc(c.n)}</b><div class="sm">${c.fijo?'📍 Fijo'+(c.zona?' · '+esc(c.zona):''):'🔄 '+(ROL_TXT[semRoles(l).roles[k]]||'Rota')+' esta semana'}</div></td>${celdas}
+      <td style="white-space:nowrap;text-align:center">${nd} d<div class="sm">${nHoras(nh)} h</div></td></tr>`;
+  };
+  const grupo=(tipo,tit)=>{ const g=cs.filter(o=>(o.c.tipo||'FT')===tipo); return g.length?`<tr class="sep"><td colspan="9">${tit}</td></tr>`+g.map(fila).join(''):''; };
+  const cuerpo=grupo('FT','FULL TIME')+grupo('PT','PART TIME');
+  const tot=(tit,campo,min)=>`<tr><td><b>${tit}</b> <span class="sm">(mín. ${min})</span></td>`+dd.map(d=>{
+      const cb=semCobertura(d), n=cb[campo], mn=campo==='m'?cb.mm:cb.mt, adj=semMinAjustado(d);
+      return `<td style="text-align:center;font-weight:700;color:${n<mn?'var(--rojo)':(adj&&mn<min?'var(--ambar)':'var(--ok)')}">${n}${adj&&mn<min?
+        `<div class="sm">acordado ${mn} · <a href="#" onclick="semMinRestaurar('${d}');return false">quitar</a></div>`:''}</td>`;}).join('')+'<td></td></tr>';
+
+  out.innerHTML=
+    (faltas.length?`<div class="aviso err" style="color:var(--txt)"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <b style="color:var(--rojo)">Cobertura incompleta en ${faltas.length} día${faltas.length>1?'s':''}</b><span style="flex:1"></span>
+        <button class="btn mini" onclick="semCubrirTodo()">Cubrir todo automáticamente</button></div>
+      <p class="sm" style="margin:4px 0 8px">Solo se proponen conductores flexibles (no los de puesto fijo ni los Part Time). Primero quien tenga menos días en la semana; nadie pasa de ${SEM_MAX_DIAS} días sin advertencia.</p>
+      ${faltas.map(o=>{
+        const fin=dias[o.d]&&dias[o.d].finalizado, cand=semCandidatos(o.d), aus=semAusentesTxt(o.d);
+        const turnos=[o.cb.fm?'M':'',o.cb.ft?'T':''].filter(Boolean);
+        return `<div style="border-top:1px solid #f3c3c8;padding:7px 0">
+          <b>${nombreDia(o.d)} ${ddmm(o.d)}</b>: falta${(o.cb.fm+o.cb.ft)>1?'n':''} ${txtFalta(o.cb)}${aus?' <span class="sm">(ausente: '+esc(aus)+')</span>':''}
+          ${fin?' <span class="sm">· día terminado</span>':turnos.map(t=>`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:5px">
+            <span class="sm" style="min-width:110px">Cubrir ${t==='M'?'mañana ('+semHoraTurno(o.d,'M')+')':'tarde (16:00)'}:</span>
+            ${cand.length?cand.map(x=>`<button class="btn mini sec" style="${x.ok?'':'opacity:.65'}"
+               title="${x.n} días esta semana${x.off?' · tiene OFF ese día':''}" onclick="semCubrir(${x.ci},'${o.d}','${t}')">${esc(nomCorto(x.c.n))}
+               <span style="font-weight:400;opacity:.8">${x.off?'OFF':'libre'} · ${x.n}d${x.ok?'':' ⚠ 7.º día'}</span></button>`).join('')
+              :'<span class="sm">nadie disponible</span>'}
+            ${t==='M'?semMovibles(o.d).map(x=>`<button class="btn mini" onclick="semMoverManana(${x.ci},'${o.d}')"
+               title="Pasa de la tarde a la mañana; la tarde queda con uno menos">${esc(nomCorto(x.c.n))} <span style="font-weight:400;opacity:.85">tarde → mañana</span></button>`).join(''):''}
+          </div>`).join('')}
+          ${fin?'':`<div style="margin-top:5px"><button class="btn mini sec" onclick="semAceptarMenos('${o.d}')">Trabajar ese día con ${o.cb.m} mañana / ${o.cb.t} tarde</button></div>`}
+        </div>`;}).join('')}</div>`:'')
+    +(sinProg.length?`<div class="aviso warn">Full Time sin horario ni ausencia: ${esc(sinProg.join(', '))}. Pon su hora o marca OFF / SICK / VACACIONES.</div>`:'')
+    +(!faltas.length&&!sinProg.length?'<div class="aviso ok">Semana completa: todos los días cumplen el mínimo de mañana y tarde.</div>':'')
+    +`<table class="semT"><thead><tr><th>Conductor</th>${dd.map((d,j)=>`<th>${DIAS3[j]} ${ddmm(d)}${dias[d]&&dias[d].finalizado?' 🏁':''}</th>`).join('')}<th>Semana</th></tr></thead>
+      <tbody>${cuerpo}${tot('Mañana','m',cfg.minM||0)}${tot('Tarde','t',cfg.minT||0)}</tbody></table>
+     <p class="hint" style="margin-top:8px">📍 Fijo = siempre en el mismo puesto o zona, no se mueve para cubrir · Fondo amarillo = turno de tarde · gris = OFF · rojo = SICK · azul = VACACIONES · borde café = cambió después de enviado · <b>E</b> = apoyo de emergencia · 🏁 = día terminado (no editable).</p>`;
+  pintarSemEnvio();
+}
+function pintarSemEnvio(){
+  const out=document.getElementById('semEnvio'); if(!out) return;
+  const l=semInicio();
+  if(!semCreada(l)){ out.innerHTML=''; return; }
+  const cs=semCond().filter(o=>semTiene(clave(o.c),l));
+  const st=o=>semStatus(o.c,l);
+  const nSin=cs.filter(o=>st(o)==='sin').length, nCam=cs.filter(o=>st(o)==='cambio').length,
+        nConf=cs.filter(o=>st(o)==='conf').length;
+  const chip={sin:'<span class="est noenv">Sin enviar</span>', env:'<span class="est pend">Enviado · falta OK</span>',
+              conf:'<span class="est conf">Confirmado</span>', cambio:'<span class="est rech">Cambió · reenviar</span>'};
+  const e=semEstR(l);
+  const filas=cs.map(o=>{
+    const c=o.c, s=st(o), t=telNorm(c.tel), env=e.env[clave(c)];
+    return `<tr class="${s==='cambio'?'fila-crit':(s==='sin'?'fila-med':'')}">
+      <td><b>${esc(c.n)}</b><div class="sm">${c.tipo==='PT'?'Part Time':'Full Time'}</div></td>
+      <td>${t?'+'+esc(t):'<span style="color:#b02a37;font-size:12px">sin teléfono</span>'}</td>
+      <td>${chip[s]}${s==='cambio'?'<div class="sm">'+semDiasCambiados(c,l).map(j=>DIAS3[j]).join(', ')+'</div>':''}</td>
+      <td class="sm">${env?new Date(env.ts).toLocaleString([], {weekday:'short',hour:'2-digit',minute:'2-digit'}):'—'}</td>
+      <td style="white-space:nowrap">
+        ${t?`<button class="btn mini wa" onclick="semEnviar(${o.i},false)">${s==='cambio'?'Reenviar':(s==='sin'?'WhatsApp':'Reenviar')}</button>`:''}
+        <button class="btn mini sec" onclick="semCopiar(${o.i})">Copiar</button>
+        <button class="btn mini ${s==='conf'?'ok':'sec'}" onclick="semConfirmar(${o.i})" title="Respondió OK">✓ OK</button>
+      </td></tr>`;
+  }).join('');
+  out.innerHTML=`
+    <div class="barra" style="margin-top:0">
+      <button class="btn wa" onclick="iniciarColaSem()">▸ Enviar a los ${nSin+nCam} pendientes${nCam?' ('+nCam+' con cambios)':''}</button>
+      <button class="btn sec" onclick="semGrupoCopiar()">Copiar roster para el grupo</button>
+      <button class="btn sec" onclick="semGrupoWA()">Abrir roster en WhatsApp</button>
+    </div>
+    <p class="hint" style="margin:10px 0">${cs.length} conductores con turnos · ${cs.length-nSin} enviados · <b>${nConf}</b> confirmados${nCam?' · <b style="color:#b02a37">'+nCam+' con cambios sin reenviar</b>':''}.
+      Cada conductor recibe solo su semana; el grupo recibe la vista completa por día.</p>
+    <table><thead><tr><th>Conductor</th><th>Teléfono</th><th>Estado</th><th>Último envío</th><th>Acciones</th></tr></thead>
+      <tbody>${filas}</tbody></table>`;
+}
+
+/* --- roster descargable (imprimir / PDF / compartir) --- */
+function exportSemanaHTML(){
+  const l=semInicio(), dd=semDiasDe(l);
+  if(!semCreada(l)){ alert('Esta semana no tiene turnos.'); return; }
+  const celda=(k,d)=>{
+    const a=ausDe(k,d), f=semFila(k,d);
+    if(a) return `<td class="a-${a}">${AUS_TXT[a]}</td>`;
+    if(!f) return '<td class="vac0">—</td>';
+    const h=hora(f.h);
+    return `<td class="${h!==null&&h>=12?'tar':''}"><b>${esc(f.h)}</b> – ${esc(f.f)}${f.semApoyo?' <span class="e">E</span>':''}${f.semRelevo?'<div class="r">releva a '+esc(primerNombre(f.semRelevo))+'</div>':''}${f.semCubre&&f.semCubre!=='hueco'?'<div class="r">cubre a '+esc(f.semCubre)+'</div>':''}</td>`;
+  };
+  const grupo=(tipo,tit)=>{
+    const g=semCond().filter(o=>(o.c.tipo||'FT')===tipo&&(semTiene(clave(o.c),l)||dd.some(d=>ausDe(clave(o.c),d))));
+    return g.length?`<tr class="sep"><td colspan="8">${tit}</td></tr>`+g.map(o=>`<tr><td class="n">${esc(o.c.n)}</td>${dd.map(d=>celda(clave(o.c),d)).join('')}</tr>`).join(''):'';
+  };
+  const tot=(tit,campo)=>`<tr class="tot"><td>${tit}</td>${dd.map(d=>`<td>${semCobertura(d)[campo]}</td>`).join('')}</tr>`;
+  const av=(semEstR(l).aviso||'').trim();
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Roster drivers ${ddmm(dd[0])} - ${ddmm(dd[6])}</title>
+<style>@page{size:A4 landscape;margin:10mm}
+body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0;padding:16px;color:#1c2430;font-size:12.5px;background:#fff}
+h1{font-size:18px;margin:0;color:#1f3864}.sub{color:#6b7787;margin:3px 0 14px}
+.sc{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:760px}
+th{background:#1f3864;color:#fff;padding:7px 6px;font-size:11.5px;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+td{border:1px solid #d7dde6;padding:6px 5px;text-align:center;vertical-align:middle}
+td.n{text-align:left;font-weight:700;white-space:nowrap}
+tr.sep td{background:#eef3fa;text-align:left;font-weight:700;font-size:11px;letter-spacing:.5px;color:#1f3864}
+.tar{background:#fff7e6}.a-off{background:#f1f3f5;color:#6b7787;font-weight:700}
+.a-sick{background:#fdecee;color:#b02a37;font-weight:700}.a-vac{background:#eaf1fb;color:#1f3864;font-weight:700}
+.vac0{color:#c8ced6}.e{background:#f3ecfb;color:#6b21a8;border-radius:8px;padding:0 5px;font-weight:700;font-size:10.5px}
+.r{font-size:10px;color:#6b7787}tr.tot td{background:#fbfcfe;font-weight:700}
+td,tr.sep td,.tar,.a-off,.a-sick,.a-vac,.e{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.av{margin-top:12px;padding:9px 11px;border-left:4px solid #2e5aa8;background:#f7faff}
+.ley{margin-top:10px;color:#6b7787;font-size:11px}</style></head><body>
+<h1>360 Estates · Roster de conductores</h1>
+<p class="sub">Semana del ${fmtF(dISO(dd[0]))} al ${fmtF(dISO(dd[6]))} · generado el ${fmtF(new Date())} · sujeto a cambios</p>
+<div class="sc"><table><thead><tr><th style="text-align:left">Conductor</th>${dd.map((d,j)=>`<th>${DIAS[j]}<br>${ddmm(d)}</th>`).join('')}</tr></thead>
+<tbody>${grupo('FT','FULL TIME')}${grupo('PT','PART TIME')}${tot('Mañana','m')}${tot('Tarde','t')}</tbody></table></div>
+${av?'<div class="av">📌 '+esc(av)+'</div>':''}
+<p class="ley">Fondo amarillo = turno de tarde · E = apoyo de emergencia · OFF = día libre · SICK = enfermedad · VACACIONES.</p>
+</body></html>`;
+  bajar(html,'roster_semana_'+l+'.html','text/html;charset=utf-8');
+}
+
+/* ===================== ALERTAS ===================== */
+function pintarAlertas(){
+  const cont=document.getElementById('alertasOut'), banner=document.getElementById('bannerAlertas'), bdg=document.getElementById('bdg');
+  const it=[];   // {c: clase, h: html}
+  const hoy=isoHoy(), lAct=lunesDe(hoy), lSig=isoMas(lAct,7), dow=idxDia(hoy);   // 0 = lunes
+
+  const revisarSemana=(l,etq)=>{
+    if(!semCreada(l)) return false;
+    semDiasDe(l).filter(d=>d>=hoy).forEach(d=>{
+      const cb=semCobertura(d); if(!cb.fm&&!cb.ft) return;
+      it.push({c:'crit',h:`<b>${nombreDia(d)} ${fmtF(dISO(d))}: falta${(cb.fm+cb.ft)>1?'n':''} ${txtFalta(cb)}</b>
+        <span class="sp">Pueden cubrir: ${esc(semLibres(d).join(', ')||'nadie disponible')}</span>
+        <button class="btn mini rojo" onclick="verSemana('${l}')">Ajustar</button>`});
+    });
+    const cs=semCond().filter(o=>semTiene(clave(o.c),l));
+    const cam=cs.filter(o=>semStatus(o.c,l)==='cambio'), sin=cs.filter(o=>semStatus(o.c,l)==='sin');
+    if(cam.length) it.push({c:'crit',h:`<b>${etq}: ${cam.length} con cambios sin reenviar</b>
+      <span class="sp">${esc(cam.map(o=>nomCorto(o.c.n)).join(' · '))}</span>
+      <button class="btn mini wa" onclick="verSemana('${l}')">Reenviar</button>`});
+    if(sin.length) it.push({c:(l===lAct?'crit':'med'),h:`<b>${etq}: ${sin.length} sin recibir su roster</b>
+      <span class="sp">${esc(sin.map(o=>nomCorto(o.c.n)).join(' · '))}</span>
+      <button class="btn mini wa" onclick="verSemana('${l}')">Enviar</button>`});
+    return true;
+  };
+  if(!revisarSemana(lAct,'Esta semana') && dow<=4)
+    it.push({c:'med',h:`<b>Esta semana todavía no tiene roster</b><span class="sp"></span>
+      <button class="btn mini" onclick="verSemana('${lAct}')">Armar</button>`});
+  if(dow>=4 && !revisarSemana(lSig,'Próxima semana'))
+    it.push({c:'med',h:`<b>La semana del ${fmtF(dISO(lSig))} todavía no está armada</b>
+      <span class="sp">El roster se envía el domingo.</span>
+      <button class="btn mini" onclick="verSemana('${lSig}')">Armar</button>`});
+
+  /* Días pasados sin cerrar: hay que registrar las horas reales */
+  const abiertos=diasSinCerrar();
+  if(abiertos.length) it.push({c:'med',h:`<b>🕒 Falta registrar las horas de ${abiertos.length} día(s)</b>
+    <span class="sp">${abiertos.slice(0,3).map(k=>nombreDia(k)+' '+fmtF(dISO(k))).join(' · ')}${abiertos.length>3?' y '+(abiertos.length-3)+' más':''}</span>
+    <button class="btn mini" onclick="setDia('${abiertos[0]}');setVista('cierre');ir('dia')">Registrar overtime</button>`});
+
+  /* Overtime acumulado de 7 días */
+  if(cfg.maxOt>0){
+    const carga=cargaReciente(isoMas(hoy,1),7);
+    const pasados=Object.keys(carga).filter(k=>carga[k].ot>cfg.maxOt);
+    if(pasados.length) it.push({c:'med',h:`<b>${pasados.length} sobre el tope de ${cfg.maxOt} h de OT en 7 días</b>
+      <span class="sp">${pasados.map(k=>{const c=condDe(k);return esc(c?c.n:k)+' '+nHoras(carga[k].ot)+'h';}).join(' · ')}</span>
+      <button class="btn mini sec" onclick="ir('historial')">Ver reporte</button>`});
+  }
+
+  bdg.textContent=it.length; bdg.className='badge'+(it.length?'':' cero');
+  const html=it.map(x=>`<div class="alerta ${x.c}">${x.h}</div>`).join('');
+  banner.innerHTML=html;
+  cont.innerHTML=html||'<div class="alerta bien"><b>Todo en orden</b><span class="sp">Roster armado, enviado y con cobertura completa.</span></div>';
+}
+
+/* ===================== CONSOLIDADO MENSUAL ===================== */
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function mesDe(isoS){ return isoS.slice(0,7); }
+function rangoMes(n){
+  const h=new Date(); const d=new Date(h.getFullYear(), h.getMonth()+n, 1);
+  rDesde=iso(d);
+  rHasta=iso(new Date(d.getFullYear(), d.getMonth()+1, 0));
+  pintarConsolidado();
+}
+function rangoDias(n){
+  rHasta=isoHoy(); rDesde=isoMas(rHasta,-(n-1)); pintarConsolidado();
+}
+function tituloRango(){
+  const d=dISO(rDesde), h=dISO(rHasta);
+  if(rDesde.slice(0,7)===rHasta.slice(0,7) && d.getDate()===1 && h.getDate()===new Date(h.getFullYear(),h.getMonth()+1,0).getDate())
+    return MESES[d.getMonth()]+' '+d.getFullYear();
+  return 'Del '+fmtF(d)+' al '+fmtF(h);
+}
+function datosMes(){
+  const claves=Object.keys(dias).filter(k=>k>=rDesde && k<=rHasta && dias[k].filas.some(f=>f.k)).sort();
+  const porCond={};
+  claves.forEach(k=>{
+    dias[k].filas.forEach(f=>{
+      if(!f.k) return;
+      const c=condDe(f.k);
+      porCond[f.k]=porCond[f.k]||{n:c?c.n:'(conductor eliminado)', id:c?c.id||'':'', dias:0, reg:0, ot:0, tot:0, det:{}};
+      const x=porCond[f.k];
+      x.dias++; x.reg+=regFila(f); x.ot+=otFila(f); x.tot+=totalFila(f);
+      x.det[k]=(x.det[k]||0)+totalFila(f);
+      x.detOt=x.detOt||{}; x.detOt[k]=(x.detOt[k]||0)+otFila(f);
+    });
+  });
+  const abiertos=claves.filter(k=>!dias[k].cerrado);
+  return {claves, porCond, abiertos};
+}
+function pintarConsolidado(){
+  const out=document.getElementById('consOut');
+  if(rDesde>rHasta){ const t=rDesde; rDesde=rHasta; rHasta=t; }
+  document.getElementById('fDesde').value=rDesde;
+  document.getElementById('fHasta').value=rHasta;
+  const {claves,porCond,abiertos}=datosMes();
+  if(!claves.length){ out.innerHTML='<div class="aviso warn">No hay días con asignaciones entre el '+fmtF(dISO(rDesde))+' y el '+fmtF(dISO(rHasta))+'.</div>'; return; }
+
+  const lista=Object.keys(porCond).map(k=>Object.assign({k:k},porCond[k])).sort((a,b)=>a.n.localeCompare(b.n));
+  const tReg=lista.reduce((s,x)=>s+x.reg,0), tOt=lista.reduce((s,x)=>s+x.ot,0), tTot=lista.reduce((s,x)=>s+x.tot,0);
+
+  const resumen=lista.map(x=>`<tr class="${x.ot>0?'fila-ot':''}">
+      <td><b>${esc(x.n)}</b></td><td>${esc(x.id)}</td><td>${x.dias}</td>
+      <td>${nHoras(x.reg)}</td><td>${x.ot>0?'<b class="ot">'+nHoras(x.ot)+'</b>':'0'}</td><td><b>${nHoras(x.tot)}</b></td></tr>`).join('');
+
+  const cabDias=claves.map(k=>'<th title="'+nombreDia(k)+' '+fmtF(dISO(k))+'">'+dISO(k).getDate()+'/'+(dISO(k).getMonth()+1)+'</th>').join('');
+  const matriz=lista.map(x=>'<tr><td style="white-space:nowrap"><b>'+esc(x.n)+'</b></td>'
+    + claves.map(k=>{
+        const t=x.det[k], o=(x.detOt||{})[k]||0;
+        if(!t) return '<td style="color:#c8ced6">·</td>';
+        return '<td class="'+(o>0?'ot':'')+'" style="text-align:center">'+nHoras(t)+(o>0?'<sup>+'+nHoras(o)+'</sup>':'')+'</td>';
+      }).join('')
+    + '<td style="text-align:right"><b>'+nHoras(x.tot)+'</b></td></tr>').join('');
+
+  out.innerHTML=`
+    <h3 style="margin-top:18px">${tituloRango()}</h3>
+    ${abiertos.length?`<div class="aviso warn">⚠ ${abiertos.length} día(s) del periodo todavía sin cerrar: ${abiertos.map(k=>fmtF(dISO(k))).join(', ')}.
+      Las horas de esos días pueden cambiar. Ciérralos desde <b>Día → Cierre de horas</b>.</div>`:
+      '<div class="aviso ok">Todos los días del periodo están cerrados. El informe es definitivo.</div>'}
+    <table>
+      <thead><tr><th>Conductor</th><th>ID</th><th>Días</th><th>Horas regulares</th><th>Overtime</th><th>Total</th></tr></thead>
+      <tbody>${resumen}</tbody>
+      <tfoot><tr style="background:#eef3fa;font-weight:700">
+        <td colspan="3">TOTALES (${claves.length} días operados)</td>
+        <td>${nHoras(tReg)}</td><td class="ot">${nHoras(tOt)}</td><td>${nHoras(tTot)}</td></tr></tfoot>
+    </table>
+    <h3>Detalle día por día</h3>
+    <p class="hint">Horas pagadas por día. El número pequeño en morado es el overtime incluido.</p>
+    <div style="overflow-x:auto">
+      <table style="font-size:12px"><thead><tr><th>Conductor</th>${cabDias}<th style="text-align:right">Total</th></tr></thead>
+      <tbody>${matriz}</tbody></table>
+    </div>`;
+}
+function exportConsolidadoCSV(){
+  const {claves,porCond}=datosMes();
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const l=[['Consolidado de horas','Del '+fmtF(dISO(rDesde)),'al '+fmtF(dISO(rHasta)),'Jornada regular: '+cfg.jornada+' h'].map(q).join(';'),
+           ['Conductor','ID','Dias trabajados','Horas regulares','Overtime','Total'].map(q).join(';')];
+  Object.keys(porCond).map(k=>porCond[k]).sort((a,b)=>a.n.localeCompare(b.n)).forEach(x=>{
+    l.push([x.n,x.id,x.dias,nHoras(x.reg),nHoras(x.ot),nHoras(x.tot)].map(q).join(';'));
+  });
+  l.push('');
+  l.push(['Detalle diario'].map(q).join(';'));
+  l.push(['Conductor'].concat(claves.map(k=>fmtF(dISO(k)))).map(q).join(';'));
+  Object.keys(porCond).map(k=>porCond[k]).sort((a,b)=>a.n.localeCompare(b.n)).forEach(x=>{
+    l.push([x.n].concat(claves.map(k=>x.det[k]?nHoras(x.det[k]):'')).map(q).join(';'));
+  });
+  bajar('﻿'+l.join('\r\n'),'consolidado_'+rDesde+'_a_'+rHasta+'.csv','text/csv;charset=utf-8');
+}
+function exportConsolidadoHTML(){
+  const {claves,porCond,abiertos}=datosMes();
+  if(!claves.length){ alert('No hay datos en ese mes.'); return; }
+  const lista=Object.keys(porCond).map(k=>porCond[k]).sort((a,b)=>a.n.localeCompare(b.n));
+  const tReg=lista.reduce((s,x)=>s+x.reg,0), tOt=lista.reduce((s,x)=>s+x.ot,0), tTot=lista.reduce((s,x)=>s+x.tot,0);
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Consolidado ${tituloRango()}</title>
+<style>body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0;padding:16px;background:#f4f6f9;color:#1c2430;font-size:14px}
+.w{max-width:1000px;margin:0 auto;background:#fff;border:1px solid #d7dde6;border-radius:8px;padding:18px}
+h1{font-size:18px;margin:0 0 2px;color:#1f3864} .sub{color:#6b7787;font-size:12.5px;margin:0 0 16px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-bottom:22px}
+th{background:#1f3864;color:#fff;text-align:left;padding:8px;font-size:12px}
+td{border-bottom:1px solid #d7dde6;padding:6px 8px}
+tfoot td{background:#eef3fa;font-weight:700}
+.ot{color:#6b21a8;font-weight:700} sup{font-size:9px}
+.av{border-radius:6px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+.av.w2{background:#fff4ce;color:#9a6700;border:1px solid #f0dfa0}
+.av.ok{background:#e8f6ec;color:#1e7e34;border:1px solid #bfe3ca}
+.sc{overflow-x:auto}
+@media print{body{background:#fff;padding:0}.w{border:0}}
+</style></head><body><div class="w">
+<h1>Consolidado de horas — ${tituloRango()}</h1>
+<p class="sub">Periodo del ${fmtF(dISO(rDesde))} al ${fmtF(dISO(rHasta))} · ${claves.length} días operados ·
+Jornada regular de ${cfg.jornada} h por día; todo lo que pasa de ahí es overtime. Generado el ${fmtF(new Date())}.</p>
+${abiertos.length?`<div class="av w2">Atención: ${abiertos.length} día(s) sin cerrar (${abiertos.map(k=>fmtF(dISO(k))).join(', ')}). Esas horas pueden cambiar.</div>`
+  :'<div class="av ok">Todos los días del periodo están cerrados.</div>'}
+<table><thead><tr><th>Conductor</th><th>ID</th><th>Días</th><th>Horas regulares</th><th>Overtime</th><th>Total</th></tr></thead>
+<tbody>${lista.map(x=>`<tr><td>${esc(x.n)}</td><td>${esc(x.id)}</td><td>${x.dias}</td><td>${nHoras(x.reg)}</td><td class="ot">${nHoras(x.ot)}</td><td><b>${nHoras(x.tot)}</b></td></tr>`).join('')}</tbody>
+<tfoot><tr><td colspan="3">TOTALES (${claves.length} días operados)</td><td>${nHoras(tReg)}</td><td class="ot">${nHoras(tOt)}</td><td>${nHoras(tTot)}</td></tr></tfoot></table>
+<h1 style="font-size:15px">Detalle día por día</h1>
+<p class="sub">Horas pagadas por día; el número pequeño es el overtime incluido.</p>
+<div class="sc"><table style="font-size:12px"><thead><tr><th>Conductor</th>${claves.map(k=>'<th>'+dISO(k).getDate()+'</th>').join('')}<th>Total</th></tr></thead>
+<tbody>${lista.map(x=>'<tr><td>'+esc(x.n)+'</td>'+claves.map(k=>{
+  const t=x.det[k], o=(x.detOt||{})[k]||0;
+  return t?'<td style="text-align:center">'+nHoras(t)+(o>0?'<sup class="ot">+'+nHoras(o)+'</sup>':'')+'</td>':'<td style="color:#c8ced6">·</td>';
+}).join('')+'<td><b>'+nHoras(x.tot)+'</b></td></tr>').join('')}</tbody></table></div>
+</div></body></html>`;
+  bajar(html,'consolidado_'+rDesde+'_a_'+rHasta+'.html','text/html;charset=utf-8');
+}
+
+/* ============ EXPORTACIONES EN EL FORMATO DE 360 ESTATES ============
+   1) Log diario:      Fecha | Driver | Entrada | Salida | Horas | OT
+   2) Roster semanal:  Drivers Name | Email | (In Out Hrs OT)x7 | Total Hours | Extra Hours
+   3) Pago 25 al 24:   Date | Normal Hours | OT Hours | Extra Projects (P/T) | Extra Project/PT Code
+   Decimales con coma, horas en h:mm:ss, "off"/"sick" en la columna de entrada.
+==================================================================== */
+function dec(x){ return String(Math.round(x*100)/100).replace('.',','); }
+function hms(v){ const h=hora(v); return h===null?'' : hhmm(h)+':00'; }
+function ausTxt(v){ return v==='sick'?'sick':(v==='vac'?'vacation':'off'); }
+
+/* --- 1) Log diario, la hoja "Fecha / Driver / Entrada / Salida / Horas / OT" --- */
+function tabla360Log(){
+  const claves=[]; let x=rDesde;
+  while(x<=rHasta){ if((dias[x]&&dias[x].filas.some(f=>f.k))||offs[x]) claves.push(x); x=isoMas(x,1); }
+  const filas=[];
+  conductores.forEach(c=>{
+    const k=clave(c);
+    claves.forEach(d=>{
+      const a=ausDe(k,d);
+      if(a){ filas.push([fmtF(dISO(d)), c.n, ausTxt(a), '', '0', '0']); return; }
+      (dias[d]?dias[d].filas:[]).filter(f=>f.k===k).forEach(f=>{
+        filas.push([fmtF(dISO(d)), c.n, hms(f.h), hms(f.f), dec(totalFila(f)), dec(otFila(f))]);
+      });
+    });
+  });
+  return {enc:['Fecha','Driver','Entrada','Salida','Horas','OT'], filas:filas};
+}
+function copiar360Log(){
+  const t=tabla360Log();
+  if(!t.filas.length){ alert('No hay días con asignaciones en el rango seleccionado.'); return; }
+  copiar([t.enc.join('\t')].concat(t.filas.map(r=>r.join('\t'))).join('\n'),
+    t.filas.length+' filas copiadas. Pégalas en la hoja "Fecha / Driver / Entrada / Salida / Horas / OT".');
+}
+function csv360Log(){
+  const t=tabla360Log();
+  if(!t.filas.length){ alert('No hay datos en el rango.'); return; }
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  bajar('﻿'+[t.enc.map(q).join(';')].concat(t.filas.map(r=>r.map(q).join(';'))).join('\r\n'),
+    'log_'+rDesde+'_a_'+rHasta+'.csv','text/csv;charset=utf-8');
+}
+
+/* --- 2) Roster semanal en rejilla In/Out/Hrs/OT --- */
+function tabla360Semana(iniISO){
+  const dd=[]; for(let i=0;i<7;i++) dd.push(isoMas(iniISO,i));
+  const fila1=['Drivers Name','Email']; dd.forEach(d=>{ const t=fmtF(dISO(d)); fila1.push(t,t,t,t); });
+  fila1.push('Total Hours','Extra Hours');
+  const fila2=['Drivers Name','Email']; dd.forEach(()=>fila2.push('In','Out','Hrs','OT'));
+  fila2.push('Total Hours','Extra Hours');
+  const filas=[fila1,fila2];
+  conductores.filter(c=>c.act).forEach(c=>{
+    const k=clave(c); const r=[c.n, c.mail||'']; let tot=0, ot=0;
+    dd.forEach(d=>{
+      const a=ausDe(k,d);
+      if(a){ r.push(ausTxt(a),'','',''); return; }
+      const f=(dias[d]?dias[d].filas:[]).find(x=>x.k===k);
+      if(!f){ r.push('','','',''); return; }
+      r.push(hms(f.h), hms(f.f), dec(totalFila(f)), dec(otFila(f)));
+      tot+=totalFila(f); ot+=otFila(f);
+    });
+    r.push(dec(tot), dec(ot));
+    filas.push(r);
+  });
+  return filas;
+}
+function copiar360Semana(){
+  const ini=isoMas(rDesde, -((dISO(rDesde).getDay()+6)%7));  // lunes de la semana de "Desde"
+  const filas=tabla360Semana(ini);
+  copiar(filas.map(r=>r.join('\t')).join('\n'),
+    'Rejilla de la semana del '+fmtF(dISO(ini))+' copiada. Pégala en la hoja del roster semanal, sobre la fila de encabezados.');
+}
+
+/* --- 3) Timesheet de pago: del 25 de un mes al 24 del siguiente --- */
+function periodoPago(refISO){
+  const d=dISO(refISO);
+  let ini = d.getDate()>=25 ? new Date(d.getFullYear(),d.getMonth(),25)
+                            : new Date(d.getFullYear(),d.getMonth()-1,25);
+  const fin=new Date(ini.getFullYear(),ini.getMonth()+1,24);
+  return {ini:iso(ini), fin:iso(fin)};
+}
+function fmtUS(isoS){ const d=dISO(isoS); return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(); }
+function timesheetDe(k,p){
+  const c=condDe(k), out=[];
+  let dISOx=p.ini, tn=0, to=0;
+  while(dISOx<=p.fin){
+    const a=ausDe(k,dISOx);
+    const f=(dias[dISOx]?dias[dISOx].filas:[]).find(x=>x.k===k);
+    let nh='', oh='';
+    if(a){ nh=AUS_TXT[a]; }
+    else if(f){ nh=dec(regFila(f)); oh=dec(otFila(f)); tn+=regFila(f); to+=otFila(f); }
+    out.push({fecha:dISOx, nh:nh, oh:oh, pay:(dISOx===p.fin)});
+    dISOx=isoMas(dISOx,1);
+  }
+  return {c:c, filas:out, tn:tn, to:to};
+}
+function exportPagoCSV(){
+  const p=periodoPago(rHasta);
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const l=[];
+  conductores.filter(c=>c.act).forEach(c=>{
+    const t=timesheetDe(clave(c),p);
+    l.push(['Name',c.n.toUpperCase(),'',(c.tipo==='PT'?'Part Time':'Full Time'),(c.tipo==='PT'?'':'173.33 Hours')].map(q).join(';'));
+    l.push([('Pay Period: '+fmtUS(p.ini).replace(/\b(\d)\//g,'0$1/')+' - '+fmtUS(p.fin)),'','','',''].map(q).join(';'));
+    l.push(['Date','Normal Hours','OT Hours','Extra Projects (P/T)','Extra Project/PT Code'].map(q).join(';'));
+    t.filas.forEach(f=>l.push([fmtUS(f.fecha),f.nh,f.oh,'',(f.pay?'Pay Day':'')].map(q).join(';')));
+    l.push(['Total',dec(t.tn),dec(t.to),'0','0'].map(q).join(';'));
+    l.push(['Signed Employee','','','',''].map(q).join(';'));
+    l.push(['Signed HOD','','','',''].map(q).join(';'));
+    l.push('');
+  });
+  bajar('﻿'+l.join('\r\n'),'pago_'+p.ini+'_a_'+p.fin+'.csv','text/csv;charset=utf-8');
+}
+function exportPagoHTML(){
+  const p=periodoPago(rHasta);
+  const hojas=conductores.filter(c=>c.act).map(c=>{
+    const t=timesheetDe(clave(c),p);
+    return `<div class="hoja">
+      <table class="cab"><tr><td class="lbl">Name</td><td class="nom">${esc(c.n.toUpperCase())}</td>
+        <td>${c.tipo==='PT'?'Part Time':'Full Time'}</td><td>${c.tipo==='PT'?'':'173.33 Hours'}</td></tr>
+        <tr><td colspan="4" class="pp">Pay Period: ${fmtUS(p.ini)} - ${fmtUS(p.fin)}</td></tr></table>
+      <table class="det"><thead><tr><th>Date</th><th>Normal Hours</th><th>OT Hours</th><th>Extra Projects (P/T)</th><th>Extra Project/PT Code</th></tr></thead>
+      <tbody>${t.filas.map(f=>`<tr><td>${fmtUS(f.fecha)}</td><td>${f.nh}</td><td>${f.oh}</td><td></td><td>${f.pay?'<b>Pay Day</b>':''}</td></tr>`).join('')}
+      <tr class="tot"><td>Total</td><td>${dec(t.tn)}</td><td>${dec(t.to)}</td><td>0</td><td>0</td></tr></tbody></table>
+      <table class="firmas"><tr><td>Signed Employee</td><td class="linea"></td></tr><tr><td>Signed HOD</td><td class="linea"></td></tr></table>
+    </div>`;}).join('');
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Pay Period ${fmtUS(p.ini)} - ${fmtUS(p.fin)}</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;margin:0;padding:14px;font-size:13px;color:#1c2430}
+.hoja{background:#fff;border:1px solid #d7dde6;border-radius:6px;padding:14px;max-width:760px;margin:0 auto 18px;page-break-after:always}
+table{border-collapse:collapse;width:100%}
+.cab td{border:1px solid #b7bfc9;padding:5px 7px} .cab .lbl{background:#eef3fa;font-weight:700;width:70px}
+.cab .nom{font-weight:700} .cab .pp{background:#eef3fa;font-weight:700}
+.det{margin-top:10px} .det th{background:#1f3864;color:#fff;border:1px solid #1f3864;padding:5px;font-size:11.5px}
+.det td{border:1px solid #d7dde6;padding:4px 7px;text-align:center} .det td:first-child{text-align:left}
+.det .tot td{background:#eef3fa;font-weight:700}
+.firmas{margin-top:16px} .firmas td{padding:12px 4px 4px;font-weight:700;width:150px}
+.firmas .linea{border-bottom:1px solid #1c2430;width:auto}
+@media print{body{background:#fff;padding:0}.hoja{border:0;margin:0}}
+</style></head><body>${hojas}</body></html>`;
+  bajar(html,'pago_'+p.ini+'_a_'+p.fin+'.html','text/html;charset=utf-8');
+}
+
+/* ===================== HISTORIAL ===================== */
+function pintarHistorial(){
+  const out=document.getElementById('histOut');
+  const claves=Object.keys(dias).filter(k=>dias[k].filas.length).sort().reverse();
+  if(!claves.length){ out.innerHTML='<div class="aviso warn">Todavía no hay días armados.</div>'; return; }
+  const filas=claves.slice(0,60).map(k=>{
+    const d=dias[k], as=d.filas.filter(f=>f.k).length;
+    const ot=d.filas.reduce((s,f)=>s+(f.k?otFila(f):0),0);
+    return `<tr><td>${nombreDia(k)} ${fmtF(dISO(k))}${d.finalizado?' <span class="est conf">finalizado</span>':''}</td><td>${d.filas.length}</td><td>${as}</td>
+      <td>${d.filas.length-as?'<b style="color:#b02a37">'+(d.filas.length-as)+'</b>':'0'}</td>
+      <td>${ot>0?'<b class="ot">'+nHoras(ot)+' h</b>':'—'}</td>
+      <td><button class="btn mini sec" onclick="setDia('${k}');ir('dia')">Abrir</button></td></tr>`;}).join('');
+
+  const carga=cargaReciente(isoMas(fechaAct,1),periodo);
+  const lista=conductores.filter(c=>c.act).map(c=>{
+    const k=clave(c), x=carga[k]||{dias:0,horas:0,ot:0,reg:0};
+    return {n:c.n, id:c.id||'', dias:x.dias, reg:x.reg, ot:x.ot, tot:x.horas};
+  }).sort((a,b)=>b.ot-a.ot);
+  const totOt=lista.reduce((s,x)=>s+x.ot,0), totReg=lista.reduce((s,x)=>s+x.reg,0);
+  const cf=lista.map(x=>`<tr class="${cfg.maxOt>0&&x.ot>cfg.maxOt?'fila-ot':''}">
+      <td>${esc(x.n)}</td><td>${esc(x.id)}</td><td>${x.dias}</td><td>${nHoras(x.reg)}</td>
+      <td>${x.ot>0?'<b class="ot">'+nHoras(x.ot)+'</b>':'0'}</td><td>${nHoras(x.tot)}</td></tr>`).join('');
+
+  out.innerHTML=`
+    <table><thead><tr><th>Día</th><th>Salidas</th><th>Asignadas</th><th>Huecos</th><th>Overtime</th><th></th></tr></thead>
+    <tbody>${filas}</tbody></table>
+
+    <h3>Reporte de horas y overtime</h3>
+    <div class="barra" style="margin:0 0 10px">
+      <span style="font-size:12px;color:#6b7787">Periodo:</span>
+      ${[7,15,30].map(n=>`<button class="btn mini ${periodo===n?'':'sec'}" onclick="periodo=${n};pintarHistorial()">Últimos ${n} días</button>`).join('')}
+      <span style="flex:1"></span>
+      <button class="btn sec mini" onclick="exportOT()">Descargar reporte (CSV)</button>
+    </div>
+    <p class="hint">Jornada regular de ${cfg.jornada} h por día. Todo lo que pase de ahí cuenta como overtime.
+      Totales del periodo: <b>${nHoras(totReg)} h regulares</b> · <b class="ot">${nHoras(totOt)} h de overtime</b>.</p>
+    <table><thead><tr><th>Conductor</th><th>ID</th><th>Días</th><th>Horas regulares</th><th>Overtime</th><th>Total</th></tr></thead>
+      <tbody>${cf}</tbody></table>`;
+}
+function exportOT(){
+  const carga=cargaReciente(isoMas(fechaAct,1),periodo);
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const desde=fmtF(dISO(isoMas(fechaAct,-(periodo-1)))), hasta=fmtF(dISO(fechaAct));
+  const l=[['Reporte de horas','Del '+desde,'al '+hasta,'Jornada regular: '+cfg.jornada+' h'].map(q).join(';'),
+           ['Conductor','ID','Dias','Horas regulares','Overtime','Total'].map(q).join(';')];
+  conductores.filter(c=>c.act).forEach(c=>{
+    const x=carga[clave(c)]||{dias:0,horas:0,ot:0,reg:0};
+    l.push([c.n,c.id||'',x.dias,nHoras(x.reg),nHoras(x.ot),nHoras(x.horas)].map(q).join(';'));
+  });
+  bajar('﻿'+l.join('\r\n'),'reporte_horas_'+fechaAct+'.csv','text/csv;charset=utf-8');
+}
+
+/* ===================== COPIAR / EXPORTAR ===================== */
+function copiar(txt,ok){
+  const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); alert(ok); }catch(e){ prompt('Copia manualmente:',txt); }
+  document.body.removeChild(ta);
+}
+function copiarDia(){
+  const d=D();
+  let t='Horario '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+':\n\n';
+  t+=d.filas.slice().sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0)).map(f=>{
+    const c=f.k?condDe(f.k):null, ot=otFila(f);
+    return `${f.h} a ${f.f} — ${c?c.n:'*** SIN CONDUCTOR ***'}${f.ruta?' — '+f.ruta:''}${ot>0?' (OT +'+nHoras(ot)+'h)':''}`;}).join('\n');
+  const totOt=d.filas.reduce((s,f)=>s+otFila(f),0);
+  if(totOt>0) t+='\n\nOvertime del día: '+nHoras(totOt)+' h.';
+  copiar(t,'Lista del día copiada.');
+}
+function exportCSV(){
+  const d=D(), q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const enc=['Fecha','Dia','Entrada','Salida','Horas regulares','Overtime','Total','Ruta','Conductor'];
+  const l=[enc.map(q).join(';')].concat(d.filas.map(f=>{
+    const c=f.k?condDe(f.k):null;
+    return [fmtF(dISO(fechaAct)),nombreDia(fechaAct),f.h,f.f,nHoras(regFila(f)),nHoras(otFila(f)),nHoras(totalFila(f)),f.ruta,
+      c?c.n:'SIN CONDUCTOR'].map(q).join(';');}));
+  bajar('﻿'+l.join('\r\n'),'roster_'+fechaAct+'.csv','text/csv;charset=utf-8');
+}
+function guardarJSON(){ bajar(JSON.stringify({conductores,plantilla,dias,offs,semanas,cfg},null,2),'respaldo_roster_diario.json','application/json'); }
+function cargarJSON(inp){
+  const f=inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{ try{
+    const o=JSON.parse(e.target.result);
+    if(Array.isArray(o.conductores)) conductores=o.conductores;
+    if(Array.isArray(o.plantilla)) plantilla=o.plantilla;
+    if(o.dias) dias=o.dias;
+    if(o.offs) offs=o.offs;
+    if(o.semanas) semanas=o.semanas;
+    if(o.cfg) cfg=Object.assign(cfg,o.cfg);
+    render(); guardar(); alert('Respaldo restaurado.'); ir('dia');
+  }catch(err){ alert('El archivo no es válido.'); } };
+  rd.readAsText(f); inp.value='';
+}
+function bajar(txt,nombre,tipo){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:tipo}));
+  a.download=nombre; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);document.body.removeChild(a);},500);
+}
+
+/* ===================== RENDER ===================== */
+let autoSemanaEnCurso=false;
+function render(){
+  if(!rDesde||!rHasta){
+    const h=new Date();
+    rDesde=iso(new Date(h.getFullYear(),h.getMonth(),1));
+    rHasta=iso(new Date(h.getFullYear(),h.getMonth()+1,0));
+  }
+  if(!autoSemanaEnCurso){ autoSemanaEnCurso=true; try{ autoSemana(); }finally{ autoSemanaEnCurso=false; } }
+  pintarSemana(); renderTablas(); pintarDia(); pintarAusencias(); pintarAlertas(); pintarCola(); pintarConsolidado(); pintarHistorial();
+  document.getElementById('cfgPais').value=cfg.pais||'';
+  document.getElementById('cfgApp').value=cfg.app||'wa';
+  document.getElementById('jorTxt').textContent=cfg.jornada;
+}
+
+/* ===================== INICIO ===================== */
+(function(){
+  if(!cargar()) ejemplo();
+  if(normalizarTipos()) guardar();
+  fechaAct=isoManana();
+  semAus=lunesDe(isoHoy());
+  render();
+  setInterval(()=>pintarAlertas(),60000);
+  window.addEventListener('beforeunload',guardar);
+  /* Varias pestañas del roster comparten los mismos datos. Si otra pestaña guarda:
+     - si es esta misma versión, se recargan sus datos para no pisarlos;
+     - si es una versión vieja, se avisa: está sobrescribiendo la semana. */
+  window.addEventListener('storage',e=>{
+    if(e.key!==KEY||!e.newValue) return;
+    let o=null; try{ o=JSON.parse(e.newValue); }catch(err){ return; }
+    if(!o.appV||o.appV<APP_V){
+      document.getElementById('avisoPestanas').innerHTML='<div class="alerta crit" style="margin-top:14px"><b>⚠ Hay una versión anterior del roster abierta en otra pestaña</b>'
+        +'<span class="sp">Está sobrescribiendo los datos (por eso la semana puede salir mal). Cierra todas las otras pestañas del roster y vuelve a generar la semana aquí.</span>'
+        +'<button class="btn mini rojo" onclick="cargar();normalizarTipos();render();guardar();this.parentNode.remove()">Ya las cerré · recuperar</button></div>';
+      return;
+    }
+    cargar(); render();
+  });
+  /* Escape cierra la ventana de Terminar día; clic fuera de la caja también */
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && document.getElementById('modalOT').classList.contains('on')) cerrarModalOT();
+  });
+  document.getElementById('modalOT').addEventListener('mousedown',e=>{
+    if(e.target.id==='modalOT') cerrarModalOT();
+  });
+})();
+</script>
+</body>
+</html>
