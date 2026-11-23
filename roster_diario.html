@@ -277,7 +277,7 @@
       </div>
     </div>
     <div class="barra">
-      <button class="btn" onclick="exportPagoHTML()">Formato de pago 360 Estates (25 al 24)</button>
+      <button class="btn" onclick="exportPagoHTML()">Formato de pago 360 Estates (mes completo)</button>
       <button class="btn sec" onclick="exportPagoCSV()">Formato de pago en CSV</button>
       <button class="btn sec" onclick="copiar360Log()">Copiar log para la hoja</button>
       <button class="btn sec" onclick="copiar360Semana()">Copiar rejilla semanal</button>
@@ -287,7 +287,7 @@
       <button class="btn sec mini" onclick="csv360Log()">Log en CSV</button>
       <button class="btn sec mini" onclick="window.print()">Imprimir / PDF</button>
     </div>
-    <p class="hint" style="margin:12px 0 0"><b>Formato de pago:</b> genera una hoja por conductor con el periodo del 25 al 24, columnas Normal Hours / OT Hours / Extra Projects y las líneas de firma, igual que tu Google Sheet.
+    <p class="hint" style="margin:12px 0 0"><b>Formato de pago:</b> genera una hoja por conductor con el mes completo en horas normales (los días aún sin armar se proyectan con el OFF fijo de cada uno), el overtime del 25 al 24, VACACIONES como LEAVE, las filas de cierre (173,33 h) y las líneas de firma. El mes se toma de la fecha <i>Hasta</i>.
     <b>Copiar log</b> te deja las filas listas para pegar en la hoja <i>Fecha / Driver / Entrada / Salida / Horas / OT</i>.</p>
   </div>
   <div id="consOut"></div>
@@ -1754,74 +1754,142 @@ function copiar360Semana(){
     'Rejilla de la semana del '+fmtF(dISO(ini))+' copiada. Pégala en la hoja del roster semanal, sobre la fila de encabezados.');
 }
 
-/* --- 3) Timesheet de pago: del 25 de un mes al 24 del siguiente --- */
-function periodoPago(refISO){
+/* --- 3) Timesheet de pago 360 Estates ---------------------------------------
+   Formato oficial (igual que la hoja de octubre):
+   · Pay Period = mes calendario completo (1 al último día).
+   · Horas normales: todos los días del mes. Lo que está en el roster sale tal cual
+     (7 / OFF / LEAVE / SICK); los días aún sin armar se proyectan con la jornada
+     regular y el día libre fijo de cada full time. Los part-time solo llevan lo trabajado.
+   · OT: corte del 25 del mes anterior al 24 del mes. Las filas del 25 al fin del mes
+     anterior aparecen arriba y solo llevan overtime.
+   · Cierre: Total, Amount of hrs in a Month (173,33), Otime of Normal Hrs,
+     Total Hrs y total P/Time.                                                   */
+const HRS_MES=173.33;
+const AUS_PAGO={off:'OFF', sick:'SICK', vac:'LEAVE'};
+const MESES_EN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function periodoPago(refISO){            // corte del overtime: 25 al 24
   const d=dISO(refISO);
   let ini = d.getDate()>=25 ? new Date(d.getFullYear(),d.getMonth(),25)
                             : new Date(d.getFullYear(),d.getMonth()-1,25);
   const fin=new Date(ini.getFullYear(),ini.getMonth()+1,24);
   return {ini:iso(ini), fin:iso(fin)};
 }
-function fmtUS(isoS){ const d=dISO(isoS); return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(); }
-function timesheetDe(k,p){
+function periodoNomina(refISO){          // mes de pago = mes en que cierra el OT
+  const p=periodoPago(refISO), f=dISO(p.fin);
+  return {otIni:p.ini, otFin:p.fin,
+          mIni:iso(new Date(f.getFullYear(),f.getMonth(),1)),
+          mFin:iso(new Date(f.getFullYear(),f.getMonth()+1,0)),
+          nombre:'Pay_Roll_'+MESES_EN[f.getMonth()]+'_'+f.getFullYear()};
+}
+function fmtUS(isoS){ const d=dISO(isoS); return String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0')+'/'+d.getFullYear(); }
+function normalDelDia(c,k,dia){
+  const a=ausDe(k,dia);
+  if(a) return {t:AUS_PAGO[a]||'OFF', n:0, proy:false};
+  const f=(dias[dia]?dias[dia].filas:[]).find(x=>x.k===k);
+  if(f){ const r=regFila(f); return {t:dec(r), n:r, proy:false}; }
+  if(c.tipo==='PT') return {t:'', n:0, proy:false};
+  if((c.d||[]).indexOf(letraDia(dia))<0) return {t:'OFF', n:0, proy:!(dias[dia]&&dias[dia].filas.some(x=>x.k))};
+  if(dias[dia] && dias[dia].filas.some(x=>x.k)) return {t:'OFF', n:0, proy:false};   // día armado y no estaba asignado
+  return {t:dec(cfg.jornada), n:cfg.jornada, proy:true};                              // día aún sin armar: proyección
+}
+function timesheetDe(k,P){
   const c=condDe(k), out=[];
-  let dISOx=p.ini, tn=0, to=0;
-  while(dISOx<=p.fin){
-    const a=ausDe(k,dISOx);
-    const f=(dias[dISOx]?dias[dISOx].filas:[]).find(x=>x.k===k);
-    let nh='', oh='';
-    if(a){ nh=AUS_TXT[a]; }
-    else if(f){ nh=dec(regFila(f)); oh=dec(otFila(f)); tn+=regFila(f); to+=otFila(f); }
-    out.push({fecha:dISOx, nh:nh, oh:oh, pay:(dISOx===p.fin)});
-    dISOx=isoMas(dISOx,1);
+  let x=P.otIni, tn=0, to=0, proy=0;
+  while(x<=P.mFin){
+    let nh='', oh='', pr=false;
+    if(x>=P.mIni){ const r=normalDelDia(c,k,x); nh=r.t; tn+=r.n; pr=r.proy; if(pr) proy++; }
+    if(x<=P.otFin){
+      const f=(dias[x]?dias[x].filas:[]).find(z=>z.k===k);
+      const o=(f&&!ausDe(k,x))?otFila(f):0;
+      if(o>0){ oh=dec(o); to+=o; }
+    }
+    out.push({fecha:x, nh:nh, oh:oh, proy:pr, enMes:x>=P.mIni, enOT:x<=P.otFin});
+    x=isoMas(x,1);
   }
-  return {c:c, filas:out, tn:tn, to:to};
+  const ft=c.tipo!=='PT', on=ft?Math.max(0,tn-HRS_MES):0;
+  return {c:c, filas:out, tn:tn, to:to, on:on, th:to+on, proy:proy, ft:ft};
 }
 function exportPagoCSV(){
-  const p=periodoPago(rHasta);
+  const P=periodoNomina(rHasta);
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   const l=[];
   conductores.filter(c=>c.act).forEach(c=>{
-    const t=timesheetDe(clave(c),p);
-    l.push(['Name',c.n.toUpperCase(),'',(c.tipo==='PT'?'Part Time':'Full Time'),(c.tipo==='PT'?'':'173.33 Hours')].map(q).join(';'));
-    l.push([('Pay Period: '+fmtUS(p.ini).replace(/\b(\d)\//g,'0$1/')+' - '+fmtUS(p.fin)),'','','',''].map(q).join(';'));
+    const t=timesheetDe(clave(c),P);
+    l.push(['Name',c.n.toUpperCase(),'',(t.ft?'Full Time':'Part Time'),(t.ft?'173.33 Hours':'')].map(q).join(';'));
+    l.push(['Pay Period: '+fmtUS(P.mIni)+' - '+fmtUS(P.mFin)+' by','','','',''].map(q).join(';'));
     l.push(['Date','Normal Hours','OT Hours','Extra Projects (P/T)','Extra Project/PT Code'].map(q).join(';'));
-    t.filas.forEach(f=>l.push([fmtUS(f.fecha),f.nh,f.oh,'',(f.pay?'Pay Day':'')].map(q).join(';')));
-    l.push(['Total',dec(t.tn),dec(t.to),'0','0'].map(q).join(';'));
+    t.filas.forEach(f=>l.push([fmtUS(f.fecha),f.nh,f.oh,'',''].map(q).join(';')));
+    l.push(['Total',dec(t.tn),dec(t.to),'€0,00',''].map(q).join(';'));
+    l.push(['Amount of hrs in a Month',t.ft?'173,33':'','','',''].map(q).join(';'));
+    l.push(['Otime of Normal Hrs',dec(t.on),'','',''].map(q).join(';'));
+    l.push(['Total Hrs',dec(t.th),'','',''].map(q).join(';'));
+    l.push(['total P/Time','€0,00','','',''].map(q).join(';'));
     l.push(['Signed Employee','','','',''].map(q).join(';'));
     l.push(['Signed HOD','','','',''].map(q).join(';'));
     l.push('');
   });
-  bajar('﻿'+l.join('\r\n'),'pago_'+p.ini+'_a_'+p.fin+'.csv','text/csv;charset=utf-8');
+  bajar('﻿'+l.join('\r\n'),P.nombre+'.csv','text/csv;charset=utf-8');
 }
 function exportPagoHTML(){
-  const p=periodoPago(rHasta);
+  const P=periodoNomina(rHasta);
+  let totProy=0;
   const hojas=conductores.filter(c=>c.act).map(c=>{
-    const t=timesheetDe(clave(c),p);
+    const t=timesheetDe(clave(c),P); totProy+=t.proy;
+    const filas=t.filas.map(f=>{
+      const off=(f.nh==='OFF'||f.nh==='LEAVE'||f.nh==='SICK');
+      return `<tr class="${off?'off':''}${f.proy?' proy':''}"><td>${fmtUS(f.fecha)}</td>`+
+        `<td class="n"${f.enMes?' contenteditable="true"':''}>${f.nh}</td>`+
+        `<td class="o"${f.enOT?' contenteditable="true"':''}>${f.oh}</td><td></td><td></td></tr>`;}).join('');
     return `<div class="hoja">
       <table class="cab"><tr><td class="lbl">Name</td><td class="nom">${esc(c.n.toUpperCase())}</td>
-        <td>${c.tipo==='PT'?'Part Time':'Full Time'}</td><td>${c.tipo==='PT'?'':'173.33 Hours'}</td></tr>
-        <tr><td colspan="4" class="pp">Pay Period: ${fmtUS(p.ini)} - ${fmtUS(p.fin)}</td></tr></table>
-      <table class="det"><thead><tr><th>Date</th><th>Normal Hours</th><th>OT Hours</th><th>Extra Projects (P/T)</th><th>Extra Project/PT Code</th></tr></thead>
-      <tbody>${t.filas.map(f=>`<tr><td>${fmtUS(f.fecha)}</td><td>${f.nh}</td><td>${f.oh}</td><td></td><td>${f.pay?'<b>Pay Day</b>':''}</td></tr>`).join('')}
-      <tr class="tot"><td>Total</td><td>${dec(t.tn)}</td><td>${dec(t.to)}</td><td>0</td><td>0</td></tr></tbody></table>
+        <td>${t.ft?'Full Time':'Part Time'}</td><td>${t.ft?'173.33 Hours':''}</td></tr>
+        <tr><td colspan="4" class="pp">Pay Period: ${fmtUS(P.mIni)} - ${fmtUS(P.mFin)} by</td></tr></table>
+      <table class="det" data-ft="${t.ft?1:0}"><thead><tr><th>Date</th><th>Normal Hours</th><th>OT Hours</th><th>Extra Projects (P/T)</th><th>Extra Project/PT Code</th></tr></thead>
+      <tbody>${filas}
+      <tr class="tot"><td>Total</td><td class="tn">${dec(t.tn)}</td><td class="to">${dec(t.to)}</td><td>€0,00</td><td></td></tr>
+      <tr class="res"><td>Amount of hrs in a Month</td><td>${t.ft?'173,33':''}</td><td></td><td></td><td></td></tr>
+      <tr class="res"><td>Otime of Normal Hrs</td><td class="on">${dec(t.on)}</td><td></td><td></td><td></td></tr>
+      <tr class="res"><td>Total Hrs</td><td class="th">${dec(t.th)}</td><td></td><td></td><td></td></tr>
+      <tr class="res"><td>total P/Time</td><td>€0,00</td><td></td><td></td><td></td></tr></tbody></table>
       <table class="firmas"><tr><td>Signed Employee</td><td class="linea"></td></tr><tr><td>Signed HOD</td><td class="linea"></td></tr></table>
     </div>`;}).join('');
-  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Pay Period ${fmtUS(p.ini)} - ${fmtUS(p.fin)}</title>
-<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;margin:0;padding:14px;font-size:13px;color:#1c2430}
-.hoja{background:#fff;border:1px solid #d7dde6;border-radius:6px;padding:14px;max-width:760px;margin:0 auto 18px;page-break-after:always}
+  const nota = totProy
+    ? `Las celdas en amarillo son días que aún no están armados en el roster: se proyectaron con ${cfg.jornada} h y el día OFF fijo de cada conductor. Revísalas antes de imprimir.`
+    : 'Todos los días del mes salen del roster.';
+  const html=`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>${P.nombre}</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;margin:0;padding:14px;color:#1c2430}
+.hoja{background:#fff;max-width:760px;margin:0 auto 18px;padding:18px 22px;border:1px solid #d7dde6;page-break-after:always}
 table{border-collapse:collapse;width:100%}
-.cab td{border:1px solid #b7bfc9;padding:5px 7px} .cab .lbl{background:#eef3fa;font-weight:700;width:70px}
-.cab .nom{font-weight:700} .cab .pp{background:#eef3fa;font-weight:700}
-.det{margin-top:10px} .det th{background:#1f3864;color:#fff;border:1px solid #1f3864;padding:5px;font-size:11.5px}
-.det td{border:1px solid #d7dde6;padding:4px 7px;text-align:center} .det td:first-child{text-align:left}
-.det .tot td{background:#eef3fa;font-weight:700}
-.firmas{margin-top:16px} .firmas td{padding:12px 4px 4px;font-weight:700;width:150px}
-.firmas .linea{border-bottom:1px solid #1c2430;width:auto}
-@media print{body{background:#fff;padding:0}.hoja{border:0;margin:0}}
-</style></head><body>${hojas}</body></html>`;
-  bajar(html,'pago_'+p.ini+'_a_'+p.fin+'.html','text/html;charset=utf-8');
+.cab td{border:1px solid #9aa4b1;padding:6px 8px;font-size:12px}
+.cab .lbl{font-weight:700;width:70px} .cab .nom{font-weight:700} .cab .pp{text-align:center;font-weight:700}
+.det{margin-top:8px;font-size:10.5px}
+.det th{background:#1f3864;color:#fff;padding:4px;border:1px solid #1f3864;font-weight:700}
+.det td{border:1px solid #c9d1dc;padding:1px 6px;height:14px;text-align:center}
+.det td:first-child{text-align:left;width:22%}
+.det tr.off td{background:#e8eef7}
+.det tr.proy td.n{background:#fff3c4}
+.det tr.tot td{font-weight:700;border-top:2px solid #1f3864}
+.det tr.res td{font-weight:700}
+.firmas{margin-top:26px;font-size:12px} .firmas td{padding:14px 4px 4px;font-weight:700;width:150px}
+.firmas .linea{border-bottom:1px solid #1c2430}
+.nota{max-width:760px;margin:0 auto 12px;font-size:12px;background:#fff8d6;border:1px solid #e6d27a;padding:8px 12px}
+@media print{body{background:#fff;padding:0}.hoja{border:0;margin:0;padding:10px 6px}.nota{display:none}.det tr.proy td.n{background:transparent}}
+</style></head><body>
+<div class="nota">${nota} Puedes hacer clic en cualquier celda de Normal Hours u OT Hours para corregirla (7, OFF, LEAVE, SICK u horas); los totales se recalculan solos. Esta nota no sale al imprimir.</div>
+${hojas}
+<script>
+function num(t){t=(t||'').trim().replace(',','.');var v=parseFloat(t);return isNaN(v)?0:v}
+function f(x){return String(Math.round(x*100)/100).replace('.',',')}
+function calc(){document.querySelectorAll('table.det').forEach(function(t){var ft=t.dataset.ft==='1',n=0,o=0;
+ t.querySelectorAll('td.n').forEach(function(c){n+=num(c.textContent);var x=c.textContent.trim().toUpperCase();c.parentNode.classList.toggle('off',x==='OFF'||x==='LEAVE'||x==='SICK')});
+ t.querySelectorAll('td.o').forEach(function(c){o+=num(c.textContent)});
+ var on=ft?Math.max(0,n-${HRS_MES}):0;
+ t.querySelector('.tn').textContent=f(n);t.querySelector('.to').textContent=f(o);
+ t.querySelector('.on').textContent=f(on);t.querySelector('.th').textContent=f(o+on);})}
+document.addEventListener('input',function(e){var tr=e.target.closest('tr');if(tr)tr.classList.remove('proy');calc()});
+<\/script></body></html>`;
+  bajar(html,P.nombre+'.html','text/html;charset=utf-8');
 }
 
 /* ===================== HISTORIAL ===================== */
