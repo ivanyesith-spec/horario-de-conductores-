@@ -1,0 +1,1991 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roster Diario de Conductores</title>
+<style>
+  :root{
+    --azul:#1f3864; --azul2:#2e5aa8; --gris:#f4f6f9; --borde:#d7dde6;
+    --txt:#1c2430; --suave:#6b7787; --ok:#1e7e34; --rojo:#b02a37; --ambar:#9a6700; --wa:#128c4a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--txt);background:var(--gris);font-size:14px}
+  header{background:var(--azul);color:#fff;padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{margin:0;font-size:17px;font-weight:600}
+  header .sub{font-size:12px;opacity:.75;flex:1}
+  #estadoGuardado{font-size:11.5px;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:12px}
+  nav{display:flex;gap:2px;background:#fff;border-bottom:1px solid var(--borde);padding:0 14px;flex-wrap:wrap}
+  nav button{border:0;background:none;padding:12px 15px;font-size:14px;cursor:pointer;color:var(--suave);border-bottom:3px solid transparent;font-family:inherit}
+  nav button.on{color:var(--azul);border-bottom-color:var(--azul);font-weight:600}
+  .badge{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:9px;background:var(--rojo);color:#fff;font-size:11px;font-weight:700;padding:0 5px;margin-left:6px;text-align:center}
+  .badge.cero{background:var(--ok)}
+  main{padding:18px;max-width:1250px;margin:0 auto}
+  .panel{display:none;background:#fff;border:1px solid var(--borde);border-radius:8px;padding:18px}
+  .panel.on{display:block}
+  h2{margin:0 0 4px;font-size:16px}
+  h3{font-size:14px;margin:22px 0 8px}
+  .hint{color:var(--suave);font-size:12.5px;margin:0 0 14px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{background:var(--azul);color:#fff;text-align:left;padding:8px 9px;font-weight:600;font-size:12px;white-space:nowrap}
+  td{border-bottom:1px solid var(--borde);padding:5px 7px;vertical-align:middle}
+  tbody tr:hover{background:#f8fafd}
+  input[type=text],input[type=number],input[type=date],select,textarea{width:100%;border:1px solid var(--borde);border-radius:5px;padding:6px 7px;font-family:inherit;font-size:13px;background:#fff;color:var(--txt)}
+  input:focus,select:focus,textarea:focus{outline:2px solid #b9cbe8;border-color:var(--azul2)}
+  .dias{display:flex;gap:3px}
+  .dia{width:26px;height:26px;border:1px solid var(--borde);border-radius:5px;background:#fff;cursor:pointer;font-size:11px;font-weight:600;color:var(--suave);padding:0;font-family:inherit}
+  .dia.on{background:var(--azul2);border-color:var(--azul2);color:#fff}
+  .btn{background:var(--azul);color:#fff;border:0;border-radius:6px;padding:9px 15px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500}
+  .btn:hover{background:var(--azul2)}
+  .btn.sec{background:#fff;color:var(--azul);border:1px solid var(--borde)}
+  .btn.sec:hover{background:#eef3fa}
+  .btn.mini{padding:4px 9px;font-size:12px}
+  .btn.ok{background:var(--ok)}
+  .btn.rojo{background:var(--rojo)}
+  .btn.wa{background:var(--wa)} .btn.wa:hover{background:#0f7a40}
+  .btn.del{background:none;color:var(--rojo);border:1px solid var(--borde);padding:3px 8px;font-size:12px;border-radius:5px;cursor:pointer;font-family:inherit}
+  .barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .caja{background:#fbfcfe;border:1px solid var(--borde);border-radius:7px;padding:14px;margin-bottom:16px}
+  .campos{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  .campo{display:flex;flex-direction:column;gap:5px}
+  .campo label{font-size:12px;color:var(--suave);font-weight:600}
+  .campo input,.campo select{min-width:150px}
+  .aviso{border-radius:6px;padding:10px 12px;font-size:13px;margin:12px 0}
+  .aviso.err{background:#fdecee;color:var(--rojo);border:1px solid #f3c3c8}
+  .aviso.ok{background:#e8f6ec;color:var(--ok);border:1px solid #bfe3ca}
+  .aviso.warn{background:#fff4ce;color:var(--ambar);border:1px solid #f0dfa0}
+  #bannerAlertas{margin:0 auto;max-width:1250px;padding:0 18px}
+  .alerta{border-radius:7px;padding:11px 14px;margin-top:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+  .alerta.crit{background:#fdecee;border:1px solid #f3c3c8;color:var(--rojo)}
+  .alerta.med{background:#fff4ce;border:1px solid #f0dfa0;color:var(--ambar)}
+  .alerta.bien{background:#e8f6ec;border:1px solid #bfe3ca;color:var(--ok)}
+  .alerta.ot{background:#f3ecfb;border:1px solid #ddc9f0;color:#6b21a8}
+  .alerta .sp{flex:1}
+  .est{display:inline-block;border-radius:11px;padding:2px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+  .est.pend{background:#fff4ce;color:var(--ambar)}
+  .est.conf{background:#e8f6ec;color:var(--ok)}
+  .est.rech{background:#fdecee;color:var(--rojo)}
+  .est.env{background:#eef3fa;color:var(--azul)}
+  .est.noenv{background:#f1f3f5;color:var(--suave)}
+  .fila-crit td{background:#fdecee}
+  .fila-med td{background:#fffaf0}
+  .fila-ot td{background:#f3ecfb}
+  tr.sep td{background:#1f3864;color:#fff;font-weight:700;font-size:11.5px;letter-spacing:.6px;padding:6px 9px}
+  tr.fila-off td{background:repeating-linear-gradient(45deg,#fdecee,#fdecee 8px,#fbe3e6 8px,#fbe3e6 16px)}
+  .ot{color:#6b21a8}
+  .vacia td{background:#fdecee;color:var(--rojo)}
+  .cola{border:2px solid var(--azul2);border-radius:8px;padding:16px;background:#f7faff}
+  .cola .quien{font-size:17px;font-weight:700;color:var(--azul)}
+  .cola pre{background:#fff;border:1px solid var(--borde);border-radius:6px;padding:10px;font-size:12.5px;white-space:pre-wrap;max-height:200px;overflow:auto;margin:10px 0}
+  textarea{min-height:100px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+  .fechaBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#eef3fa;border:1px solid #d3e0f0;border-radius:8px;padding:10px 12px;margin-bottom:16px}
+  .fechaBar .hoy{font-size:16px;font-weight:700;color:var(--azul)}
+  /* ---- Ventana de Terminar día / horas extras ---- */
+  .modal{position:fixed;inset:0;background:rgba(15,22,35,.55);display:none;z-index:900;
+    align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto}
+  .modal.on{display:flex}
+  .modal .box{background:#fff;border-radius:10px;width:100%;max-width:820px;
+    box-shadow:0 18px 50px rgba(0,0,0,.3);overflow:hidden}
+  .modal .top{background:var(--azul);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .modal .top h3{margin:0;font-size:16px;font-weight:600}
+  .modal .top .f{font-size:12.5px;opacity:.8;flex:1}
+  .modal .top .x{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:6px;
+    width:28px;height:28px;font-size:16px;cursor:pointer;font-family:inherit;line-height:1}
+  .modal .cuerpo{padding:16px 18px;max-height:58vh;overflow:auto}
+  .modal .pie{border-top:1px solid var(--borde);background:#fbfcfe;padding:12px 18px;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .modal .pie .tot{flex:1;font-size:14px}
+  .modal .pie .tot b{font-size:17px}
+  .modal table{font-size:13px}
+  .modal td{vertical-align:middle}
+  .otbox{display:flex;gap:4px;align-items:center}
+  .otbox input{width:74px;text-align:center;font-weight:700;font-size:14px}
+  .otbox .btn{padding:5px 8px;font-size:12px}
+  .otchip{display:inline-block;background:#f3ecfb;color:#6b21a8;border:1px solid #ddc9f0;
+    border-radius:11px;padding:2px 9px;font-size:11.5px;font-weight:700}
+  .otchip.cero{background:#f1f3f5;color:var(--suave);border-color:var(--borde)}
+  @media print{
+    body{background:#fff}
+    header,nav,.noimp,.barra,#bannerAlertas,.fechaBar .btn,.modal{display:none!important}
+    main{padding:0;max-width:none}
+    .panel{border:0;padding:0;display:none}
+    .panel.on{display:block}
+    th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚚 Roster Diario de Conductores</h1>
+  <span class="sub">Armas el día, lo envías y controlas quién confirmó</span>
+  <span id="estadoGuardado">—</span>
+</header>
+
+<nav>
+  <button data-t="dia" class="on">Día</button>
+  <button data-t="alertas">Alertas <span class="badge cero" id="bdg">0</span></button>
+  <button data-t="envio">Enviar</button>
+  <button data-t="ausencias">Ausencias</button>
+  <button data-t="conductores">Conductores</button>
+  <button data-t="plantilla">Plantilla</button>
+  <button data-t="consolidado">Consolidado</button>
+  <button data-t="historial">Historial</button>
+  <button data-t="datos">Respaldo</button>
+</nav>
+
+<div id="bannerAlertas"></div>
+
+<main>
+
+<!-- DIA -->
+<section class="panel on" id="p-dia">
+  <div class="fechaBar noimp">
+    <button class="btn sec mini" onclick="moverDia(-1)">◂ Anterior</button>
+    <input type="date" id="fDia" style="width:auto" onchange="setDia(this.value)">
+    <span class="hoy" id="etqDia"></span>
+    <button class="btn sec mini" onclick="moverDia(1)">Siguiente ▸</button>
+    <span style="flex:1"></span>
+    <button class="btn sec mini" onclick="setDia(isoHoy())">Hoy</button>
+    <button class="btn mini" onclick="setDia(isoManana())">Mañana</button>
+  </div>
+
+  <div class="caja noimp" id="cajaAcciones">
+    <div class="campos">
+      <div class="campo"><button class="btn" onclick="generarDia()">Armar día con la plantilla</button></div>
+      <div class="campo"><button class="btn sec" onclick="reasignarLibres()">Rellenar solo los huecos</button></div>
+      <div class="campo"><label>Jornada regular (horas)</label>
+        <input type="number" id="fJor" min="1" max="12" step="0.5" onchange="cfg.jornada=+this.value||7;render();guardar()"></div>
+      <div class="campo"><label>Tope de OT en 7 días</label>
+        <input type="number" id="fMaxOt" min="0" step="1" onchange="cfg.maxOt=+this.value||0;render();guardar()"></div>
+      <div class="campo"><label>Descanso mínimo desde el día anterior</label>
+        <select id="fDesc" onchange="cfg.desc=+this.value;guardar()">
+          <option value="0">Sin mínimo</option><option value="8">8 horas</option>
+          <option value="10">10 horas</option><option value="12">12 horas</option>
+        </select></div>
+      <div class="campo"><button class="btn sec" onclick="addFila()">+ Agregar salida</button></div>
+      <div class="campo"><button class="btn sec" onclick="vaciarDia()">Vaciar día</button></div>
+      <div class="campo"><button class="btn ok" onclick="finalizarDia()" id="btnFinalizar">🏁 Terminar día</button></div>
+    </div>
+  </div>
+
+  <div class="caja noimp" id="cajaAviso" style="border-left:4px solid var(--azul2)">
+    <div class="campo" style="width:100%">
+      <label>📌 Aviso del día — se anexa al mensaje de WhatsApp de cada conductor</label>
+      <textarea id="fAviso" style="min-height:70px;font-family:inherit"
+        placeholder="Ej: Recuerden pasar por el depósito a recoger las llaves antes de salir. Hoy hay cierre en la avenida principal."
+        oninput="D().aviso=this.value;guardar();pintarCola();pintarEnvioTabla()"></textarea>
+    </div>
+    <div class="barra" style="margin-top:8px">
+      <button class="btn sec mini" onclick="ir('envio')">Ver cómo queda el mensaje</button>
+      <button class="btn wa mini" onclick="iniciarColaAviso()">Enviar SOLO el aviso a todos</button>
+      <span style="font-size:12px;color:var(--suave)">Si lo dejas vacío, el mensaje sale normal.</span>
+    </div>
+  </div>
+
+  <div id="diaOut"></div>
+</section>
+
+<!-- ALERTAS -->
+<section class="panel" id="p-alertas">
+  <h2>Alertas del día</h2>
+  <p class="hint">Quién falta por recibir su horario y quién falta por confirmar. La urgencia se mide contra su hora de entrada.</p>
+  <div id="alertasOut"></div>
+</section>
+
+<!-- ENVIO -->
+<section class="panel" id="p-envio">
+  <h2>Enviar horarios por WhatsApp</h2>
+  <p class="hint">Abre WhatsApp con el mensaje ya escrito. Tú das enviar y queda registrado.</p>
+  <div class="caja">
+    <div class="campos">
+      <div class="campo"><label>Código de país</label><input type="text" id="cfgPais" placeholder="1" oninput="cfg.pais=this.value.replace(/\D/g,'');guardar()"></div>
+      <div class="campo"><label>WhatsApp a usar</label>
+        <select id="cfgApp" onchange="cfg.app=this.value;guardar()">
+          <option value="wa">WhatsApp Web / Escritorio</option>
+          <option value="api">WhatsApp instalado (app)</option>
+        </select></div>
+      <div class="campo" style="flex:1;min-width:280px"><label>Plantilla del mensaje</label>
+        <textarea id="cfgTpl" style="min-height:130px" oninput="cfg.tpl=this.value;guardar()"></textarea></div>
+    </div>
+    <p class="hint" style="margin:10px 0 0">Etiquetas: <code>{nombre}</code> <code>{cuando}</code> <code>{dia}</code> <code>{fecha}</code> <code>{hora}</code> <code>{fin}</code> <code>{ruta}</code></p>
+  </div>
+  <div id="colaOut"></div>
+  <div id="envioTabla"></div>
+</section>
+
+<!-- AUSENCIAS -->
+<section class="panel" id="p-ausencias">
+  <h2>Ausencias programadas</h2>
+  <p class="hint">Deja marcados los días libres de toda la semana. Quien esté marcado no aparece como disponible ese día ni se le puede asignar turno por error.</p>
+  <div id="ausOut"></div>
+</section>
+
+<!-- CONDUCTORES -->
+<section class="panel" id="p-conductores">
+  <h2>Conductores</h2>
+  <p class="hint">La <b>zona habitual</b> se pone sola al armar el día; los que dejes en "todas" quedan vacíos para que elijas.
+    <button class="btn sec mini" onclick="editarZonas()">Editar lista de zonas</button></p>
+  <table>
+    <thead><tr>
+      <th style="width:16%">Drivers Name</th><th style="width:17%">Email</th><th style="width:10%">Teléfono</th>
+      <th style="width:9%">Tipo</th><th style="width:12%">Zona habitual</th><th style="width:5%">Activo</th>
+      <th style="width:15%">Días disponibles</th><th style="width:9%">Hora habitual</th><th></th>
+    </tr></thead>
+    <tbody id="tbC"></tbody>
+  </table>
+  <div class="barra">
+    <button class="btn" onclick="addC()">+ Agregar conductor</button>
+    <button class="btn sec" onclick="togglePeg('pegC')">Pegar desde Excel/Sheets</button>
+  </div>
+  <div class="caja" id="pegC" style="display:none;margin-top:14px">
+    <p class="hint">Columnas: <b>Drivers Name · Email · Teléfono · Tipo · Días disponibles · Hora habitual</b>. Días: <code>TODOS</code> o <code>L,M,X,J,V</code>. Tipo: <code>Full Time</code> o <code>Part Time</code>.</p>
+    <textarea id="txtC" placeholder="Christian Bernal Leiva	cbernal2601@gmail.com	8095550101	Full Time	TODOS	09:00"></textarea>
+    <div class="barra"><button class="btn" onclick="pegarC()">Importar</button></div>
+  </div>
+  <div id="cargaOut"></div>
+</section>
+
+<!-- PLANTILLA -->
+<section class="panel" id="p-plantilla">
+  <h2>Plantilla de salidas</h2>
+  <p class="hint">Las salidas típicas de un día. Al armar el día se copian y de ahí ajustas lo que cambie. La salida se calcula sola a las <b id="jorTxt">7</b> horas de la entrada.</p>
+  <table>
+    <thead><tr><th style="width:14%">Entrada</th><th style="width:14%">Salida</th><th style="width:12%">Cantidad</th><th style="width:26%">Ruta / Zona</th><th style="width:26%">Días que aplica</th><th></th></tr></thead>
+    <tbody id="tbP"></tbody>
+  </table>
+  <div class="barra"><button class="btn" onclick="addP()">+ Agregar salida a la plantilla</button></div>
+</section>
+
+<!-- CONSOLIDADO -->
+<section class="panel" id="p-consolidado">
+  <h2>Consolidado mensual de horas</h2>
+  <p class="hint">Todo el mes en una sola vista: días trabajados, horas regulares y overtime por conductor, listo para nómina.</p>
+  <div class="caja noimp">
+    <div class="campos">
+      <div class="campo"><label>Desde</label><input type="date" id="fDesde" onchange="rDesde=this.value;pintarConsolidado()"></div>
+      <div class="campo"><label>Hasta</label><input type="date" id="fHasta" onchange="rHasta=this.value;pintarConsolidado()"></div>
+      <div class="campo"><label>Atajos</label>
+        <div class="barra" style="margin:0">
+          <button class="btn sec mini" onclick="rangoMes(0)">Este mes</button>
+          <button class="btn sec mini" onclick="rangoMes(-1)">Mes pasado</button>
+          <button class="btn sec mini" onclick="rangoDias(15)">Últimos 15 días</button>
+          <button class="btn sec mini" onclick="rangoDias(30)">Últimos 30 días</button>
+        </div>
+      </div>
+    </div>
+    <div class="barra">
+      <button class="btn" onclick="exportPagoHTML()">Formato de pago 360 Estates (25 al 24)</button>
+      <button class="btn sec" onclick="exportPagoCSV()">Formato de pago en CSV</button>
+      <button class="btn sec" onclick="copiar360Log()">Copiar log para la hoja</button>
+      <button class="btn sec" onclick="copiar360Semana()">Copiar rejilla semanal</button>
+    </div>
+    <div class="barra">
+      <button class="btn sec mini" onclick="exportConsolidadoHTML()">Informe interno (resumen)</button>
+      <button class="btn sec mini" onclick="csv360Log()">Log en CSV</button>
+      <button class="btn sec mini" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+    <p class="hint" style="margin:12px 0 0"><b>Formato de pago:</b> genera una hoja por conductor con el periodo del 25 al 24, columnas Normal Hours / OT Hours / Extra Projects y las líneas de firma, igual que tu Google Sheet.
+    <b>Copiar log</b> te deja las filas listas para pegar en la hoja <i>Fecha / Driver / Entrada / Salida / Horas / OT</i>.</p>
+  </div>
+  <div id="consOut"></div>
+</section>
+
+<!-- HISTORIAL -->
+<section class="panel" id="p-historial">
+  <h2>Historial</h2>
+  <p class="hint">Días ya armados. Sirve para consultar, para repartir la carga de forma pareja y para reportar horas.</p>
+  <div id="histOut"></div>
+</section>
+
+<!-- DATOS -->
+<section class="panel" id="p-datos">
+  <h2>Respaldo</h2>
+  <p class="hint">Todo se guarda solo en este navegador. Descarga un respaldo si cambias de computadora.</p>
+  <div class="grid2">
+    <div class="caja"><h2 style="font-size:14px">Descargar respaldo</h2>
+      <p class="hint">Conductores, plantilla, todos los días, envíos y confirmaciones.</p>
+      <button class="btn" onclick="guardarJSON()">Descargar respaldo (.json)</button></div>
+    <div class="caja"><h2 style="font-size:14px">Restaurar respaldo</h2>
+      <p class="hint">Reemplaza todo lo que hay ahora.</p>
+      <input type="file" id="fileJSON" accept=".json" onchange="cargarJSON(this)"></div>
+  </div>
+  <div class="caja"><h2 style="font-size:14px">Borrar todo</h2>
+    <button class="btn sec" onclick="borrarTodo()">Restablecer a ejemplos</button></div>
+  <div id="avisoAlmacen"></div>
+</section>
+
+</main>
+
+<!-- ===== VENTANA: TERMINAR DÍA / HORAS EXTRAS ===== -->
+<div class="modal" id="modalOT">
+  <div class="box">
+    <div class="top">
+      <h3>🏁 Terminar día</h3>
+      <span class="f" id="modalFecha"></span>
+      <button class="x" onclick="cerrarModalOT()" title="Cancelar">✕</button>
+    </div>
+    <div class="cuerpo" id="modalCuerpo"></div>
+    <div class="pie">
+      <span class="tot" id="modalTotal"></span>
+      <button class="btn sec" onclick="cerrarModalOT()">Cancelar</button>
+      <button class="btn ok" onclick="guardarModalOT()">Guardar y terminar día</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== CONSTANTES ===================== */
+const LETRAS=['L','M','X','J','V','S','D'];
+const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const KEY='rosterDiario.v2';
+const TPL_DEF=`Hola {nombre}, tu horario de {cuando} {dia} {fecha}:
+
+- Entrada: {hora}
+- Salida estimada: {fin}
+- Ruta: {ruta}
+{otTxt}
+Respóndeme OK para confirmar. Si tienes algún inconveniente, avísame lo antes posible.`;
+
+let conductores=[], plantilla=[], dias={}, offs={}, fechaAct=null, semAus='';
+let cfg={pais:'1', app:'wa', tpl:TPL_DEF, desc:10, jornada:7, maxOt:10, zonas:['Norte','Centro','Sur']};
+let cola=[], colaIdx=0, colaTipo='wa', almacenOK=true, periodo=7, vista='conductor', rDesde='', rHasta='';
+
+/* ===================== PERSISTENCIA ===================== */
+function guardar(){
+  if(!almacenOK) return;
+  try{
+    localStorage.setItem(KEY, JSON.stringify({conductores,plantilla,dias,offs,cfg,ts:Date.now()}));
+    const d=new Date();
+    document.getElementById('estadoGuardado').textContent='✔ Guardado '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }catch(e){
+    almacenOK=false;
+    document.getElementById('estadoGuardado').textContent='⚠ No se puede guardar';
+    document.getElementById('avisoAlmacen').innerHTML='<div class="aviso err">Este navegador no permite guardar (modo incógnito o restricción del equipo). Usa el respaldo .json.</div>';
+  }
+}
+function cargar(){
+  try{
+    const raw=localStorage.getItem(KEY); if(!raw) return false;
+    const o=JSON.parse(raw);
+    conductores=o.conductores||[]; plantilla=o.plantilla||[]; dias=o.dias||{}; offs=o.offs||{};
+    cfg=Object.assign({pais:'1',app:'wa',tpl:TPL_DEF,desc:10,jornada:7,maxOt:10,zonas:['Norte','Centro','Sur']}, o.cfg||{});
+    if(o.ts){ const d=new Date(o.ts);
+      document.getElementById('estadoGuardado').textContent='✔ Guardado '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+    return true;
+  }catch(e){ return false; }
+}
+function borrarTodo(){
+  if(!confirm('¿Borrar conductores, plantilla y todos los días guardados?')) return;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  ejemplo(); cfg={pais:'1',app:'wa',tpl:TPL_DEF,desc:10,jornada:7,maxOt:10,zonas:['Norte','Centro','Sur']}; fechaAct=isoManana(); render(); guardar();
+}
+
+/* ===================== EJEMPLO ===================== */
+function ejemplo(){
+  conductores=[
+    {n:'Christian Bernal Leiva', mail:'cbernal2601@gmail.com',           tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Norte'},
+    {n:'Francisco Tinoco',       mail:'Ftinocov@gmail.com',              tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Centro'},
+    {n:'Oscar Ojeda',            mail:'oscarojeda29@hotmail.com',        tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Sur'},
+    {n:'Misael Panqueva',        mail:'Junior432rodriguez@gmail.com',    tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'09:00', zona:'Centro'},
+    {n:'Santiago Lascarro',      mail:'santiagolascarro012@gmail.com',   tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'12:00', zona:''},
+    {n:'Oscar Borja',            mail:'oskr0706@icloud.com',             tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'16:00', zona:''},
+    {n:'Alejandro Vanegas',      mail:'vanegasalejandro005@gmail.com',   tipo:'FT', tel:'', act:true, d:LETRAS.slice(), hab:'16:00', zona:''},
+    {n:'Edwin Valcarcel',        mail:'',                                tipo:'PT', tel:'', act:true, d:LETRAS.slice(), hab:'',      zona:''},
+    {n:'Juan Gomez',             mail:'',                                tipo:'PT', tel:'', act:true, d:LETRAS.slice(), hab:'16:30', zona:''},
+    {n:'Daniel Roman',           mail:'',                                tipo:'PT', tel:'', act:true, d:LETRAS.slice(), hab:'16:00', zona:''}
+  ];
+  plantilla=[
+    {h:'06:00', f:'13:00', req:2, ruta:'Zona Norte', d:['L','M','X','J','V','S']},
+    {h:'08:00', f:'15:00', req:1, ruta:'Zona Este',  d:LETRAS.slice()},
+    {h:'14:00', f:'21:00', req:2, ruta:'Zona Sur',   d:['L','M','X','J','V']}
+  ];
+  dias={};
+}
+
+/* ===================== AJUSTES DE PLANTILLA DE PERSONAL =====================
+   Edwin Valcarcel, Juan Gomez y Daniel Roman son Part Time.
+   Esto corrige los datos que ya estaban guardados en el navegador. */
+const FORZAR_PT=['edwin valcarcel','juan gomez','daniel roman'];
+function normalizarTipos(){
+  let cambio=false;
+  conductores.forEach(c=>{
+    const n=(c.n||'').trim().toLowerCase();
+    if(FORZAR_PT.indexOf(n)>=0 && c.tipo!=='PT'){ c.tipo='PT'; cambio=true; }
+    if(!c.tipo) { c.tipo='FT'; cambio=true; }
+  });
+  return cambio;
+}
+
+/* ===================== FECHAS ===================== */
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isoHoy(){ return iso(new Date()); }
+function isoManana(){ const d=new Date(); d.setDate(d.getDate()+1); return iso(d); }
+function dISO(s){ const p=String(s).split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+function fmtF(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }
+function idxDia(isoS){ const d=dISO(isoS).getDay(); return d===0?6:d-1; }   // 0=Lunes
+function letraDia(isoS){ return LETRAS[idxDia(isoS)]; }
+function nombreDia(isoS){ return DIAS[idxDia(isoS)]; }
+function cuandoTxt(isoS){ return isoS===isoHoy()?'hoy':(isoS===isoManana()?'mañana':'del'); }
+function isoMas(isoS,n){ const d=dISO(isoS); d.setDate(d.getDate()+n); return iso(d); }
+
+/* ===================== UTIL ===================== */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function hora(v){ const m=String(v||'').trim().match(/^(\d{1,2})[:.h]?(\d{2})?/); if(!m) return null;
+  const h=+m[1], mi=+(m[2]||0); return (h>23||mi>59)?null:h+mi/60; }
+function hhmm(x){ let h=Math.floor(x)%24,m=Math.round((x-Math.floor(x))*60); if(m===60){m=0;h=(h+1)%24;}
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'); }
+function parseDias(v){ const s=String(v||'').trim().toUpperCase();
+  if(!s||s==='TODOS'||s==='TODOS LOS DIAS'||s==='TODOS LOS DÍAS') return LETRAS.slice();
+  const r=s.split(/[,;\/\s]+/).map(x=>x.trim()).filter(x=>LETRAS.indexOf(x)>=0); return r.length?r:LETRAS.slice(); }
+function clave(c){ return (c.n||'').trim().toLowerCase()+'|'+((c.mail||c.id||'')+'').trim().toLowerCase(); }
+function condDe(k){ return conductores.find(c=>clave(c)===k); }
+function telNorm(tel){
+  let t=String(tel||'').replace(/\D/g,''); if(!t) return '';
+  t=t.replace(/^0+/,'');
+  const p=(cfg.pais||'').replace(/\D/g,'');
+  if(p && t.indexOf(p)!==0 && t.length<=10) t=p+t;
+  return t;
+}
+
+/* ===================== MODELO DEL DÍA ===================== */
+function dia(isoS){
+  if(!dias[isoS]) dias[isoS]={filas:[], creado:null};
+  return dias[isoS];
+}
+function D(){ return dia(fechaAct); }
+function setDia(v){ if(!v) return; fechaAct=v; cola=[]; colaIdx=0; render(); }
+function moverDia(n){ setDia(isoMas(fechaAct,n)); }
+
+function generarDia(){
+  if(bloqueado()) return;
+  const d=D();
+  if(d.filas.length && !confirm('Este día ya tiene asignaciones. ¿Rehacerlo desde la plantilla? Se pierden los envíos y confirmaciones de este día.')) return;
+  const letra=letraDia(fechaAct);
+  d.filas = [];
+  plantilla.filter(p=>(p.d||[]).indexOf(letra)>=0).sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0)).forEach(p=>{
+    for(let i=0;i<(p.req||1);i++) d.filas.push({h:p.h, f:p.f, ruta:p.ruta||'', k:'', enviado:null, estado:'pendiente', ts:null, nota:''});
+  });
+  d.creado=Date.now();
+  asignar(true);
+  render(); guardar();
+}
+function reasignarLibres(){ if(bloqueado()) return; asignar(false); render(); guardar(); }
+
+function asignar(desdeCero){
+  const d=D(), letra=letraDia(fechaAct);
+  if(desdeCero) d.filas.forEach(f=>{ f.k=''; f.enviado=null; f.estado='pendiente'; f.ts=null; });
+
+  const ocupados={}; d.filas.forEach(f=>{ if(f.k) ocupados[f.k]=true; });
+  const carga=cargaReciente(fechaAct,7);
+  const finPrev=finesDelDia(isoMas(fechaAct,-1));
+
+  d.filas.slice().sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0)).forEach(f=>{
+    if(f.k) return;
+    const hIni=hora(f.h); if(hIni===null) return;
+    const cand=conductores.filter(c=>{
+      if(!c.act||!(c.n||'').trim()) return false;
+      const k=clave(c);
+      if(ocupados[k]) return false;
+      if(ausDe(k,fechaAct)) return false;            // OFF / SICK / VACACIONES programados
+      if((c.d||[]).indexOf(letra)<0) return false;
+      if(cfg.desc>0 && finPrev[k]!==undefined && (24+hIni)-finPrev[k] < cfg.desc) return false;
+      return true;
+    });
+    if(!cand.length) return;
+    cand.sort((a,b)=>{
+      const ka=clave(a), kb=clave(b);
+      const A=carga[ka]||{dias:0,horas:0,ot:0}, B=carga[kb]||{dias:0,horas:0,ot:0};
+      if(A.dias!==B.dias) return A.dias-B.dias;
+      if(A.ot!==B.ot) return A.ot-B.ot;          // el overtime también se reparte parejo
+      const ha=A.horas, hb=B.horas;
+      if(ha!==hb) return ha-hb;
+      const pa=(hora(a.hab)!==null && Math.abs(hora(a.hab)-hIni)<1)?0:1;
+      const pb=(hora(b.hab)!==null && Math.abs(hora(b.hab)-hIni)<1)?0:1;
+      if(pa!==pb) return pa-pb;
+      return a.n.localeCompare(b.n);
+    });
+    const c=cand[0], k=clave(c);
+    f.k=k; ocupados[k]=true;
+    carga[k]=carga[k]||{dias:0,horas:0,ot:0,reg:0};
+    carga[k].dias++; carga[k].horas+=totalFila(f); carga[k].ot+=otFila(f);
+  });
+}
+function durFila(f){
+  const i=hora(f.h), fi=hora(f.f);
+  if(i===null||fi===null) return 0;
+  let x=fi-i; if(x<=0) x+=24; return x;
+}
+/* Jornada regular = cfg.jornada (7 h). Lo que pase de ahí es overtime.
+   f.otm = overtime escrito a mano (manda sobre el calculado por hora de salida). */
+/* OT_MIN: el overtime empieza a contar desde 0.5 h.
+   Nada por debajo de media hora se paga; a partir de ahí se redondea
+   al bloque de 0.5 h más cercano (0.5, 1, 1.5, 2 ...). */
+const OT_MIN=0.5;
+function redondearOT(x){
+  if(x<OT_MIN) return 0;
+  return Math.round(x/OT_MIN)*OT_MIN;
+}
+function otFila(f){
+  if(f.aus) return 0;
+  if(f.otm!==undefined && f.otm!==null && f.otm!=='') return redondearOT(Math.max(0, +f.otm||0));
+  return redondearOT(Math.max(0, durFila(f)-cfg.jornada));
+}
+function regFila(f){ return f.aus ? 0 : Math.min(durFila(f), cfg.jornada); }
+function totalFila(f){ return regFila(f)+otFila(f); }
+function faltaFila(f){ const d=durFila(f); return d>0 ? Math.max(0, cfg.jornada-d) : 0; }
+function finJornada(hIni){ const i=hora(hIni); return i===null?'' : hhmm(i+cfg.jornada); }
+function nHoras(x){ return (Math.round(x*100)/100).toString().replace(/\.00?$/,''); }
+function finesDelDia(isoS){
+  const out={}; const d=dias[isoS]; if(!d) return out;
+  d.filas.forEach(f=>{ if(!f.k) return;
+    const i=hora(f.h); if(i===null) return;
+    const fin=i+totalFila(f);
+    if(out[f.k]===undefined||fin>out[f.k]) out[f.k]=fin;
+  });
+  return out;
+}
+function cargaReciente(isoS,n){
+  const out={};
+  for(let i=1;i<=n;i++){
+    const d=dias[isoMas(isoS,-i)]; if(!d) continue;
+    d.filas.forEach(f=>{ if(!f.k||f.aus) return;
+      out[f.k]=out[f.k]||{dias:0,horas:0,ot:0,reg:0};
+      out[f.k].dias++; out[f.k].horas+=totalFila(f);
+      out[f.k].ot+=otFila(f); out[f.k].reg+=regFila(f);
+    });
+  }
+  return out;
+}
+function addFila(){ if(bloqueado()) return; D().filas.push({h:'06:00',f:finJornada('06:00'),ruta:'',k:'',enviado:null,estado:'pendiente',ts:null,nota:''}); render(); guardar(); }
+function vaciarDia(){ if(bloqueado()) return; if(!confirm('¿Vaciar todas las salidas de este día?')) return; D().filas=[]; render(); guardar(); }
+/* Guardia: ningún cambio entra si el día ya fue finalizado */
+function bloqueado(){
+  if(D().finalizado){ alert('Este día ya fue finalizado. Usa "Deshacer" en el aviso verde si necesitas corregir algo.'); return true; }
+  return false;
+}
+function setF(i,campo,v){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  if(campo==='h'){
+    // Si la salida estaba en la jornada regular, se mueve con la entrada. Si fue ajustada a mano, se respeta.
+    const eraRegular = f.f===finJornada(f.h);
+    f.h=v;
+    if(eraRegular) f.f=finJornada(v);
+  }else{
+    f[campo]=v;
+    if(campo==='k'){ f.enviado=null; f.estado='pendiente'; }
+  }
+  render(); guardar();
+}
+function resetSalida(i){ if(bloqueado()) return; const f=D().filas[i]; f.f=finJornada(f.h); f.otm=null; render(); guardar(); }
+/* Suma o resta overtime en bloques de media hora moviendo la hora de salida.
+   Nunca baja de la jornada regular: el mínimo es 0 h de OT. */
+function addOT(i,h){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  const ini=hora(f.h); if(ini===null) return;
+  const otActual=Math.max(0, durFila(f)-cfg.jornada);
+  const nuevo=Math.max(0, Math.round((otActual+h)/OT_MIN)*OT_MIN);
+  f.otm=null;
+  f.f=hhmm(ini+cfg.jornada+nuevo);
+  render(); guardar();
+}
+function quitarFila(i){ if(bloqueado()) return; D().filas.splice(i,1); render(); guardar(); }
+
+/* ===================== NAV ===================== */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); document.getElementById('p-'+b.dataset.t).classList.add('on');
+  };
+});
+function ir(t){ document.querySelector('nav button[data-t="'+t+'"]').click(); }
+function togglePeg(id){ const e=document.getElementById(id); e.style.display=e.style.display==='none'?'block':'none'; }
+
+/* ===================== TABLAS BASE ===================== */
+function diasHTML(a,t,i){ return '<div class="dias">'+LETRAS.map(l=>
+  '<button class="dia'+(a.indexOf(l)>=0?' on':'')+'" onclick="togD(\''+t+'\','+i+',\''+l+'\')">'+l+'</button>').join('')+'</div>'; }
+function togD(t,i,l){ const a=t==='c'?conductores[i].d:plantilla[i].d; const p=a.indexOf(l);
+  if(p>=0) a.splice(p,1); else a.push(l); render(); guardar(); }
+function setC(i,c,v){ conductores[i][c]=v; guardar(); }
+function setP(i,c,v){
+  const p=plantilla[i];
+  if(c==='h'){ const eraRegular=p.f===finJornada(p.h); p.h=v; if(eraRegular) p.f=finJornada(v); render(); }
+  else p[c]=v;
+  guardar();
+}
+
+function renderTablas(){
+  /* Los conductores se listan separados: primero Full Time, después Part Time */
+  const filaC=(c,i)=>`
+    <tr>
+      <td><input type="text" value="${esc(c.n)}" oninput="setC(${i},'n',this.value)"></td>
+      <td><input type="text" value="${esc(c.mail||'')}" placeholder="correo@ejemplo.com" oninput="setC(${i},'mail',this.value)"></td>
+      <td><input type="text" value="${esc(c.tel||'')}" placeholder="8095550101" oninput="setC(${i},'tel',this.value)"></td>
+      <td><select onchange="setC(${i},'tipo',this.value);render()">
+            <option value="FT" ${(c.tipo||'FT')==='FT'?'selected':''}>Full Time</option>
+            <option value="PT" ${c.tipo==='PT'?'selected':''}>Part Time</option>
+          </select></td>
+      <td><select onchange="setC(${i},'zona',this.value);render()">${optZonas(c.zona||'')}</select></td>
+      <td style="text-align:center"><input type="checkbox" ${c.act?'checked':''} onchange="setC(${i},'act',this.checked)"></td>
+      <td>${diasHTML(c.d,'c',i)}</td>
+      <td><select onchange="setC(${i},'hab',this.value);render()">${optHoras(c.hab||'',true)}</select></td>
+      <td><button class="btn del" onclick="conductores.splice(${i},1);render();guardar()">✕</button></td>
+    </tr>`;
+
+  const grupoC=(tipo,titulo)=>{
+    const g=conductores.map((c,i)=>({c,i})).filter(o=>((o.c.tipo||'FT')===tipo));
+    if(!g.length) return '';
+    const act=g.filter(o=>o.c.act).length;
+    return `<tr class="sep"><td colspan="9">${titulo}
+        <span style="font-weight:400;opacity:.75">— ${g.length} en total, ${act} activo${act===1?'':'s'}</span></td></tr>`
+      + g.map(o=>filaC(o.c,o.i)).join('');
+  };
+  document.getElementById('tbC').innerHTML=grupoC('FT','FULL TIME')+grupoC('PT','PART TIME');
+
+  document.getElementById('tbP').innerHTML=plantilla.map((p,i)=>`
+    <tr>
+      <td><select onchange="setP(${i},'h',this.value)" style="font-weight:600">${optHoras(p.h)}</select></td>
+      <td><select onchange="setP(${i},'f',this.value)">${optHoras(p.f)}</select></td>
+      <td><input type="number" min="1" value="${p.req}" oninput="setP(${i},'req',+this.value||1)"></td>
+      <td><input type="text" value="${esc(p.ruta||'')}" oninput="setP(${i},'ruta',this.value)"></td>
+      <td>${diasHTML(p.d,'p',i)}</td>
+      <td><button class="btn del" onclick="plantilla.splice(${i},1);render();guardar()">✕</button></td>
+    </tr>`).join('');
+}
+/* Desplegable de horas en bloques de media hora: 00:00, 00:30, 01:00 … 23:30.
+   Si el valor guardado no cae en la rejilla (ej. 16:45) se agrega igual
+   para no perder el dato. */
+function optHoras(sel, vacio){
+  const v=String(sel||'').trim();
+  const lista=[];
+  for(let h=0;h<24;h++){ lista.push(hhmm(h)); lista.push(hhmm(h+0.5)); }
+  const norm=(hora(v)!==null)?hhmm(hora(v)):'';
+  if(norm && lista.indexOf(norm)<0) lista.push(norm);
+  lista.sort();
+  let out = vacio ? `<option value="" ${!norm?'selected':''}>— sin fijar —</option>` : '';
+  out += lista.map(t=>`<option value="${t}" ${t===norm?'selected':''}>${t}</option>`).join('');
+  return out;
+}
+function optZonas(sel){
+  return ['<option value="">— todas / sin fijar —</option>']
+    .concat((cfg.zonas||[]).map(z=>`<option value="${esc(z)}" ${z===sel?'selected':''}>${esc(z)}</option>`)).join('');
+}
+function editarZonas(){
+  const v=prompt('Zonas separadas por coma:', (cfg.zonas||[]).join(', '));
+  if(v===null) return;
+  cfg.zonas=v.split(',').map(s=>s.trim()).filter(Boolean);
+  render(); guardar();
+}
+function addC(){ conductores.push({n:'',mail:'',tel:'',tipo:'FT',act:true,d:LETRAS.slice(),hab:'',zona:''}); render(); guardar(); }
+function addP(){ plantilla.push({h:'06:00',f:finJornada('06:00'),req:1,ruta:'',d:LETRAS.slice()}); render(); guardar(); }
+function pegarC(){
+  const txt=document.getElementById('txtC').value.trim(); if(!txt) return; let n=0;
+  txt.split(/\r?\n/).forEach(li=>{
+    const p=li.indexOf('\t')>=0?li.split('\t'):li.split(/\s{2,}/);
+    if(!p[0]||!p[0].trim()||/^nombre$/i.test(p[0].trim())) return;
+    conductores.push({n:(p[0]||'').trim(),mail:(p[1]||'').trim(),tel:(p[2]||'').trim(),
+      tipo:(/part/i.test(p[3]||'')?'PT':'FT'), act:true, d:parseDias(p[4]), hab:(p[5]||'').trim()});
+    n++;
+  });
+  document.getElementById('txtC').value=''; render(); guardar(); alert(n+' conductor(es) importado(s).');
+}
+
+/* ===================== VISTA DEL DÍA ===================== */
+/* ---- asignación por conductor (varios a la vez) ---- */
+function filaDeK(k){ return D().filas.findIndex(f=>f.k===k); }
+/* ---- AUSENCIAS PROGRAMADAS (OFF / SICK / VACACIONES) ----
+   Viven en offs[fecha][clave]. Un conductor con ausencia programada
+   no se puede asignar ese día y no aparece en la lista de disponibles. */
+const AUS_TXT={off:'OFF', sick:'SICK', vac:'VACACIONES'};
+function ausDe(k,isoS){ return (offs[isoS]||{})[k]||null; }
+function setAus(k,isoS,v){
+  if(isoS===fechaAct && bloqueado()) return;
+  if(!v){ if(offs[isoS]) { delete offs[isoS][k]; if(!Object.keys(offs[isoS]).length) delete offs[isoS]; } }
+  else {
+    offs[isoS]=offs[isoS]||{}; offs[isoS][k]=v;
+    const d=dias[isoS];                       // si estaba asignado ese día, se libera
+    if(d){ const i=d.filas.findIndex(f=>f.k===k); if(i>=0) d.filas[i].k=''; }
+  }
+  render(); guardar();
+}
+function cicloAus(k,isoS){
+  const v=ausDe(k,isoS);
+  setAus(k,isoS, v===null?'off' : v==='off'?'sick' : v==='sick'?'vac' : null);
+}
+function ausSemana(k,v){
+  for(let i=0;i<7;i++) setAusSilencio(k, isoMas(semAus,i), v);
+  render(); guardar();
+}
+function setAusSilencio(k,isoS,v){
+  if(!v){ if(offs[isoS]){ delete offs[isoS][k]; if(!Object.keys(offs[isoS]).length) delete offs[isoS]; } return; }
+  offs[isoS]=offs[isoS]||{}; offs[isoS][k]=v;
+  const d=dias[isoS]; if(d){ const i=d.filas.findIndex(f=>f.k===k); if(i>=0) d.filas[i].k=''; }
+}
+function moverSemAus(n){ semAus=isoMas(semAus,n*7); render(); }
+function lunesDe(isoS){ return isoMas(isoS, -((dISO(isoS).getDay()+6)%7)); }
+
+function pintarAusencias(){
+  const out=document.getElementById('ausOut');
+  if(!semAus) semAus=lunesDe(isoHoy());
+  const dd=[]; for(let i=0;i<7;i++) dd.push(isoMas(semAus,i));
+  const cab=dd.map((d,i)=>`<th>${DIAS[i].slice(0,3)}<div style="font-weight:400;font-size:10.5px">${dISO(d).getDate()}/${dISO(d).getMonth()+1}</div></th>`).join('');
+  const grupo=(tipo,titulo)=>{
+    const cs=conductores.filter(c=>c.act&&(c.n||'').trim()&&(c.tipo||'FT')===tipo);
+    if(!cs.length) return '';
+    return `<tr class="sep"><td colspan="10">${titulo}</td></tr>`+cs.map(c=>{
+      const k=clave(c);
+      return `<tr><td style="white-space:nowrap"><b>${esc(c.n)}</b></td>`
+        + dd.map(d=>{
+            const v=ausDe(k,d);
+            const col=v==='sick'?'#fdecee':v==='vac'?'#eaf1fb':v==='off'?'#f1f3f5':'#fff';
+            const txt=v?AUS_TXT[v]:'·';
+            const cl=v==='sick'?'#b02a37':v==='vac'?'#1f3864':'#6b7787';
+            return `<td style="text-align:center;padding:2px">
+              <button onclick="cicloAus('${k}','${d}')" title="Clic para cambiar: OFF → SICK → VACACIONES → limpiar"
+                style="width:100%;border:1px solid #d7dde6;border-radius:5px;background:${col};color:${cl};
+                font-size:10.5px;font-weight:700;padding:6px 2px;cursor:pointer;font-family:inherit">${txt}</button></td>`;
+          }).join('')
+        + `<td style="white-space:nowrap">
+             <button class="btn mini sec" onclick="ausSemana('${k}','off')">Toda OFF</button>
+             <button class="btn mini sec" onclick="ausSemana('${k}',null)">Limpiar</button></td></tr>`;
+    }).join('');
+  };
+  out.innerHTML=`
+    <div class="fechaBar noimp">
+      <button class="btn sec mini" onclick="moverSemAus(-1)">◂ Semana anterior</button>
+      <span class="hoy">Semana del ${fmtF(dISO(semAus))} al ${fmtF(dISO(isoMas(semAus,6)))}</span>
+      <button class="btn sec mini" onclick="moverSemAus(1)">Semana siguiente ▸</button>
+      <span style="flex:1"></span>
+      <button class="btn sec mini" onclick="semAus=lunesDe(isoHoy());render()">Esta semana</button>
+    </div>
+    <p class="hint">Haz clic en cada casilla para ir cambiando: <b>OFF</b> → <b>SICK</b> → <b>VACACIONES</b> → vacío.
+      Un conductor marcado no se puede asignar ese día y desaparece de la lista de disponibles.</p>
+    <table><thead><tr><th>Conductor</th>${cab}<th>Semana completa</th></tr></thead>
+      <tbody>${grupo('FT','FULL TIME')}${grupo('PT','PART TIME')}</tbody></table>`;
+}
+
+function togTrabaja(k){ setTrabaja(k, filaDeK(k)>=0 ? 'no' : 'si'); }
+function setTrabaja(k, modo){
+  if(bloqueado()) return;
+  const i=filaDeK(k), d=D();
+  if(modo==='off'||modo==='sick'||modo==='vac'){ setAus(k,fechaAct,modo); return; }
+  setAusSilencio(k,fechaAct,null);              // trabajar o quitar limpia la ausencia
+  if(modo==='no'){
+    if(i>=0){
+      if(d.filas[i].enviado && !confirm('A este conductor ya se le envió su horario. ¿Quitarlo del día?')) return;
+      d.filas.splice(i,1);
+    }
+  }else if(i<0){
+    const c=condDe(k);
+    const h=(c&&c.hab&&hora(c.hab)!==null)?c.hab:'09:00';
+    d.filas.push({h:h, f:finJornada(h), ruta:'', k:k, enviado:null, estado:'pendiente', ts:null, nota:''});
+  }
+  render(); guardar();
+}
+function setFK(k,campo,v){ const i=filaDeK(k); if(i>=0) setF(i,campo,v); }
+function marcarDisponibles(){
+  if(bloqueado()) return;
+  const letra=letraDia(fechaAct), d=D();
+  let n=0;
+  conductores.filter(c=>c.act&&(c.n||'').trim()&&(c.d||[]).indexOf(letra)>=0).forEach(c=>{
+    const k=clave(c);
+    if(filaDeK(k)>=0 || ausDe(k,fechaAct)) return;
+    const h=(c.hab&&hora(c.hab)!==null)?c.hab:'06:00';
+    d.filas.push({h:h, f:finJornada(h), ruta:'', k:k, enviado:null, estado:'pendiente', ts:null, nota:''});
+    n++;
+  });
+  render(); guardar();
+  if(!n) alert('Todos los disponibles de hoy ya están en el día.');
+}
+function quitarTodos(){
+  if(bloqueado()) return;
+  if(!confirm('¿Quitar a todos los conductores de este día?')) return;
+  D().filas=[]; render(); guardar();
+}
+function horaATodos(){
+  if(bloqueado()) return;
+  const v=prompt('Hora de entrada para TODOS los del día (formato 06:00):','06:00');
+  if(v===null) return;
+  if(hora(v)===null){ alert('Hora inválida.'); return; }
+  D().filas.forEach(f=>{ const era=f.f===finJornada(f.h); f.h=v; if(era) f.f=finJornada(v); });
+  render(); guardar();
+}
+function copiarDiaAnterior(){
+  if(bloqueado()) return;
+  const prev=dias[isoMas(fechaAct,-1)];
+  if(!prev||!prev.filas.length){ alert('El día anterior no tiene asignaciones guardadas.'); return; }
+  if(D().filas.length && !confirm('Se reemplaza lo de este día con la asignación del día anterior. ¿Continuar?')) return;
+  D().filas=prev.filas.map(f=>({h:f.h,f:f.f,ruta:f.ruta,k:f.k,enviado:null,estado:'pendiente',ts:null,nota:''}));
+  D().creado=Date.now();
+  render(); guardar();
+}
+function setVista(v){ vista=v; render(); }
+function barraVista(){
+  return `<div class="barra noimp" style="margin-top:0">
+    <span style="font-size:12px;color:#6b7787;font-weight:600">Vista:</span>
+    <button class="btn mini ${vista==='conductor'?'':'sec'}" onclick="setVista('conductor')">Por conductor</button>
+    <button class="btn mini ${vista==='salidas'?'':'sec'}" onclick="setVista('salidas')">Por salida / ruta</button>
+    <button class="btn mini ${vista==='cierre'?'':'sec'}" onclick="setVista('cierre')">Cierre de horas</button>
+    <span style="flex:1"></span>
+    <button class="btn sec mini" onclick="copiarDiaAnterior()">Copiar del día anterior</button>
+    <button class="btn sec mini" onclick="horaATodos()">Misma hora a todos</button>
+  </div>`;
+}
+
+/* ---- CIERRE: registrar las horas reales (normalmente al día siguiente) ---- */
+function setOTM(i,v){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  f.otm = (v===''||v===null) ? null : Math.max(0,+v||0);
+  render(); guardar();
+}
+/* Botones rápidos de overtime en bloques de media hora */
+function addOTM(i,h){
+  if(bloqueado()) return;
+  const f=D().filas[i];
+  const base=(f.otm!==undefined&&f.otm!==null&&f.otm!=='')?+f.otm:otFila(f);
+  f.otm=Math.max(0, Math.round((base+h)/OT_MIN)*OT_MIN);
+  render(); guardar();
+}
+function cerrarDia(){
+  const d=D();
+  if(d.finalizado){ alert('Este día está finalizado. Usa "Deshacer finalización" primero.'); return; }
+  if(!d.filas.filter(f=>f.k).length){ alert('Este día no tiene conductores.'); return; }
+  d.cerrado = !d.cerrado;
+  d.cerradoTs = d.cerrado?Date.now():null;
+  render(); guardar();
+}
+function finalizarDia(){
+  const d=D();
+  if(!d.filas.filter(f=>f.k).length){ alert('Este día no tiene conductores asignados.'); return; }
+
+  /* Reabrir un día ya terminado */
+  if(d.finalizado){
+    if(!confirm('Este día ya está terminado.\n\n¿Reabrirlo para corregir horarios u horas extras?')) return;
+    d.finalizado=false; d.finalizadoTs=null;
+    d.cerrado=false;  d.cerradoTs=null;
+    render(); guardar();
+    return;
+  }
+
+  /* Avisos antes de abrir el formulario */
+  const asign=d.filas.filter(f=>f.k&&!f.aus);
+  const sinEnviar=asign.filter(f=>!f.enviado).length;
+  if(sinEnviar && !confirm(sinEnviar+' conductor(es) todavía no han recibido su horario.\n¿Terminar el día de todas formas?')) return;
+
+  abrirModalOT();
+}
+
+/* ===================== VENTANA DE HORAS EXTRAS =====================
+   Al terminar el día se abre este formulario con todos los conductores
+   que trabajaron. Ahí se escribe el overtime de cada uno en bloques de
+   media hora. Al guardar, el día queda cerrado y bloqueado. */
+let otTmp={};          // índice de fila -> horas de OT escritas en el formulario
+
+function abrirModalOT(){
+  const d=D();
+  otTmp={};
+  d.filas.forEach((f,i)=>{ if(f.k && !f.aus) otTmp[i]=otFila(f); });
+  document.getElementById('modalFecha').textContent=nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct));
+  document.getElementById('modalOT').classList.add('on');
+  pintarModalOT();
+}
+function cerrarModalOT(){
+  document.getElementById('modalOT').classList.remove('on');
+  otTmp={};
+}
+function setOTTmp(i,v){
+  const x=(v===''||v===null)?0:Math.max(0,+v||0);
+  otTmp[i]=redondearOT(x);
+  pintarModalOT();   // redibuja para que el campo muestre el valor ya redondeado
+}
+function addOTTmp(i,h){
+  otTmp[i]=Math.max(0, redondearOT((otTmp[i]||0)+h));
+  pintarModalOT();
+}
+function otTmpTotal(){
+  return Object.keys(otTmp).reduce((s,i)=>s+(otTmp[i]||0),0);
+}
+function pintarModalOT(soloTotal){
+  const d=D();
+  const idx=Object.keys(otTmp).map(Number)
+    .sort((a,b)=>(hora(d.filas[a].h)||0)-(hora(d.filas[b].h)||0));
+
+  if(!soloTotal){
+    const filas=idx.map(i=>{
+      const f=d.filas[i], c=condDe(f.k), ot=otTmp[i]||0;
+      return `<tr class="${ot>0?'fila-ot':''}">
+        <td><b>${esc(c?c.n:'?')}</b>
+            <div style="font-size:11.5px;color:#6b7787">${esc((c&&c.tipo==='PT')?'Part Time':'Full Time')}${f.ruta?' · '+esc(f.ruta):''}</div></td>
+        <td style="white-space:nowrap">${esc(f.h)} → ${esc(f.f)}</td>
+        <td style="text-align:center">${nHoras(regFila(f))} h</td>
+        <td>
+          <div class="otbox">
+            <button class="btn sec" onclick="addOTTmp(${i},-0.5)" title="Quitar media hora">−</button>
+            <input type="number" min="0" step="0.5" value="${ot?nHoras(ot):''}" placeholder="0"
+                   onchange="setOTTmp(${i},this.value)">
+            <button class="btn sec" onclick="addOTTmp(${i},0.5)" title="Sumar media hora">+</button>
+          </div>
+        </td>
+        <td style="text-align:center"><b>${nHoras(regFila(f)+ot)} h</b></td>
+        <td><input type="text" value="${esc(f.nota||'')}" placeholder="Motivo…"
+                   onchange="D().filas[${i}].nota=this.value"></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('modalCuerpo').innerHTML=`
+      <p class="hint">Escribe las horas extras de cada conductor. El overtime <b>empieza en 0.5 h</b>:
+        menos de media hora no cuenta y todo se ajusta a bloques de media hora.
+        Deja en blanco a quien no hizo horas extras.</p>
+      <table>
+        <thead><tr>
+          <th>Conductor</th><th>Turno</th><th style="text-align:center">Regular</th>
+          <th style="width:170px">Horas extras</th><th style="text-align:center">Total</th><th style="width:170px">Nota</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  }
+
+  const tot=otTmpTotal(), n=idx.filter(i=>(otTmp[i]||0)>0).length;
+  document.getElementById('modalTotal').innerHTML=
+    `Overtime del día: <b class="ot">${nHoras(tot)} h</b> `+
+    `<span class="otchip ${n?'':'cero'}">${n} conductor${n===1?'':'es'}</span>`;
+}
+function guardarModalOT(){
+  const d=D(), tot=otTmpTotal();
+  const asign=d.filas.filter(f=>f.k&&!f.aus);
+  const sinConf=asign.filter(f=>f.estado!=='confirmado'&&f.estado!=='rechazado').length;
+  if(sinConf && !confirm(sinConf+' confirmación(es) siguen pendientes.\n¿Guardar y terminar de todas formas?')) return;
+
+  if(!confirm('Terminar '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+'.\n\n'
+    +'Overtime total: '+nHoras(tot)+' h\n\n'
+    +'El día queda bloqueado. Podrás deshacerlo si necesitas corregir.')) return;
+
+  /* Se graba el overtime como valor manual para que mande sobre la hora de salida */
+  Object.keys(otTmp).forEach(i=>{
+    const ot=otTmp[i]||0;
+    d.filas[i].otm = ot>0 ? ot : null;
+  });
+
+  d.finalizado=true;
+  d.finalizadoTs=Date.now();
+  d.finalizadoOt=tot;
+  if(!d.cerrado){ d.cerrado=true; d.cerradoTs=Date.now(); }   // terminar también cierra las horas
+  cerrarModalOT();
+  render(); guardar();
+  alert('✓ Día terminado. Overtime registrado: '+nHoras(tot)+' h.');
+}
+function diasSinCerrar(){
+  const hoy=isoHoy(), out=[];
+  Object.keys(dias).forEach(k=>{
+    if(k>=hoy) return;                                   // solo días ya pasados
+    const d=dias[k];
+    if(d.filas.filter(f=>f.k).length && !d.cerrado) out.push(k);
+  });
+  return out.sort().reverse();
+}
+function pintarDiaCierre(out,d){
+  const asign=d.filas.map((f,i)=>({f,i})).filter(o=>o.f.k&&!o.f.aus)
+    .sort((a,b)=>(hora(a.f.h)||0)-(hora(b.f.h)||0));
+  if(!asign.length){
+    out.innerHTML=barraVista()+'<div class="aviso warn">Este día no tiene conductores asignados.</div>'; return;
+  }
+  const filas=asign.map(o=>{
+    const f=o.f, c=condDe(f.k), ot=otFila(f), manual=(f.otm!==undefined&&f.otm!==null&&f.otm!=='');
+    return `<tr class="${ot>0?'fila-ot':''}">
+      <td><b>${esc(c?c.n:'?')}</b><div style="font-size:11.5px;color:#6b7787">${esc(f.ruta||'')}</div></td>
+      <td>${esc(f.h)}</td>
+      <td>${finJornada(f.h)}</td>
+      <td><input type="text" value="${esc(f.f)}" ${(manual||d.finalizado)?'disabled style="background:#f1f3f5"':''} oninput="setF(${o.i},'f',this.value)"></td>
+      <td><input type="number" min="0" step="0.5" value="${manual?esc(f.otm):''}" placeholder="—" oninput="setOTM(${o.i},this.value)" ${d.finalizado?'disabled':''}>
+          <div style="margin-top:3px;white-space:nowrap">
+            <button class="btn mini sec" onclick="addOTM(${o.i},0.5)" title="Sumar media hora" ${d.finalizado?'disabled':''}>+½</button>
+            <button class="btn mini sec" onclick="addOTM(${o.i},1)" title="Sumar una hora" ${d.finalizado?'disabled':''}>+1</button>
+            <button class="btn mini sec" onclick="setOTM(${o.i},'')" title="Limpiar OT manual" ${d.finalizado?'disabled':''}>↺</button>
+          </div></td>
+      <td>${ot>0?'<b class="ot">'+nHoras(ot)+' h</b>':'0'}</td>
+      <td><b>${nHoras(totalFila(f))} h</b></td>
+      <td><input type="text" value="${esc(f.nota||'')}" placeholder="Motivo del OT…" oninput="D().filas[${o.i}].nota=this.value;guardar()" ${d.finalizado?'disabled':''}></td>
+    </tr>`;}).join('');
+  const totReg=asign.reduce((s,o)=>s+regFila(o.f),0), totOt=asign.reduce((s,o)=>s+otFila(o.f),0);
+
+  out.innerHTML=barraVista()+`
+    ${d.finalizado?`<div class="aviso ok" style="border-left:4px solid var(--ok)">
+      <b>🏁 Día terminado</b> el ${new Date(d.finalizadoTs||Date.now()).toLocaleString()} — overtime total ${nHoras(totOt)} h. Los campos están bloqueados.
+      <button class="btn mini sec" style="margin-left:10px" onclick="finalizarDia()">Deshacer</button></div>`:''}
+    <div class="aviso ${d.cerrado?'ok':'warn'}">
+      ${d.cerrado
+        ? '✔ Día cerrado el '+new Date(d.cerradoTs||Date.now()).toLocaleString()+'. Las horas ya cuentan como definitivas en el consolidado.'
+        : 'Día <b>abierto</b>. Registra la salida real o las horas extra de cada conductor y ciérralo para que quede firme en el consolidado.'}
+    </div>
+    <div class="barra noimp" style="margin-top:0">
+      <button class="btn ${d.cerrado?'sec':''}" onclick="cerrarDia()">${d.cerrado?'Reabrir día':'Cerrar día'}</button>
+      <button class="btn ok" onclick="finalizarDia()">${d.finalizado?'↺ Reabrir día terminado':'🏁 Terminar día'}</button>
+      <button class="btn sec" onclick="exportCSV()">CSV del día</button>
+      <button class="btn sec" onclick="ir('consolidado')">Ver consolidado del mes</button>
+    </div>
+    <p class="hint" style="margin:12px 0 6px">
+      Puedes registrar el overtime de dos formas: escribiendo la <b>salida real</b>, o poniendo directo las <b>horas extra</b>.
+      Si escribes horas extra, ese número manda y la salida se ignora.
+      El overtime <b>empieza en 0.5 h</b>: menos de media hora no cuenta, y de ahí en adelante va en bloques de media hora.
+      &nbsp;|&nbsp; Regulares: <b>${nHoras(totReg)} h</b> · Overtime: <b class="${totOt>0?'ot':''}">${nHoras(totOt)} h</b>
+    </p>
+    <table>
+      <thead><tr><th>Conductor</th><th>Entrada</th><th>Salida regular</th><th>Salida real</th><th>OT directo (h)</th><th>Overtime</th><th>Total pagado</th><th>Nota</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
+
+/* Todo conductor activo que no esté OFF trabaja: se le crea su fila sola. */
+function asegurarFilas(){
+  const d=D(); let cambio=false;
+  if(d.finalizado) return;   // un día finalizado no se toca
+  conductores.filter(c=>c.act&&(c.n||'').trim()).forEach(c=>{
+    const k=clave(c), i=filaDeK(k), a=ausDe(k,fechaAct);
+    if(a){ if(i>=0){ d.filas.splice(i,1); cambio=true; } return; }
+    if(i<0){
+      const h=(c.hab&&hora(c.hab)!==null)?c.hab:'09:00';
+      d.filas.push({h:h, f:finJornada(h), ruta:c.zona||'', k:k, enviado:null, estado:'pendiente', ts:null, nota:''});
+      cambio=true;
+    }
+  });
+  if(cambio) guardar();
+}
+function pintarDiaConductores(out,d){
+  asegurarFilas();
+  const finPrev=finesDelDia(isoMas(fechaAct,-1));
+  const carga=cargaReciente(fechaAct,7);
+
+  const lista=conductores.filter(c=>c.act&&(c.n||'').trim()).map(c=>{
+    const k=clave(c);
+    return {c:c, k:k, i:filaDeK(k), aus:ausDe(k,fechaAct)};
+  }).sort((a,b)=>{
+    if(!!a.aus!==!!b.aus) return a.aus?1:-1;
+    if(!a.aus&&!b.aus) return (hora(d.filas[a.i].h)||0)-(hora(d.filas[b.i].h)||0);
+    return a.c.n.localeCompare(b.c.n);
+  });
+
+  const pintaFila=(o)=>{
+    const x=carga[o.k]||{dias:0,ot:0};
+    if(o.aus){
+      const col=o.aus==='sick'?'#b02a37':(o.aus==='vac'?'#1f3864':'#6b7787');
+      return `<tr class="fila-off">
+        <td><b style="color:${col}">${esc(o.c.n)}</b><div style="font-size:11.5px;color:#6b7787">${esc(o.c.mail||'')}</div></td>
+        <td colspan="5" style="font-weight:800;letter-spacing:.5px;color:${col}">${AUS_TXT[o.aus]}
+          <span style="font-weight:400;color:#6b7787"> — no trabaja hoy, no cuenta horas</span>
+          <button class="btn mini sec" style="margin-left:10px" onclick="setAus('${o.k}','${fechaAct}',null)">Quitar</button></td>
+        <td>${x.dias} d · ${nHoras(x.ot)} h OT</td><td>—</td><td>—</td></tr>`;
+    }
+    const f=d.filas[o.i];
+    const ot=otFila(f), falta=faltaFila(f);
+    const hIni=hora(f.h);
+    let corto=false;
+    if(cfg.desc>0 && finPrev[o.k]!==undefined && hIni!==null) corto=((24+hIni)-finPrev[o.k])<cfg.desc;
+    const est=f.estado||'pendiente';
+    const etq = est==='confirmado'?'<span class="est conf">Confirmado</span>':est==='rechazado'?'<span class="est rech">Rechazado</span>':'<span class="est pend">Pendiente</span>';
+    return `<tr class="${ot>0?'fila-ot':(corto?'fila-med':'')}">
+      <td><b>${esc(o.c.n)}</b><div style="font-size:11.5px;color:#6b7787">${esc(o.c.mail||o.c.tel||'')}</div>
+          ${corto?'<div style="font-size:11px;color:#9a6700">⚠ descanso corto</div>':''}</td>
+      <td><select onchange="setFK('${o.k}','h',this.value)" ${d.finalizado?'disabled':''} style="font-weight:600;${d.finalizado?'background:#f1f3f5;cursor:not-allowed':''}">${optHoras(f.h)}</select></td>
+      <td><select onchange="setFK('${o.k}','f',this.value)" ${d.finalizado?'disabled':''} style="${d.finalizado?'background:#f1f3f5;cursor:not-allowed':''}">${optHoras(f.f)}</select>
+          <div style="font-size:11px;color:#6b7787">regular: ${finJornada(f.h)}</div></td>
+      <td>${ot>0?'<b class="ot">+'+nHoras(ot)+' h</b>':(falta>0?'<span style="color:#9a6700">−'+nHoras(falta)+' h</span>':'—')}
+          <div style="margin-top:3px;white-space:nowrap">
+            <button class="btn mini sec" onclick="addOT(${o.i},-0.5)" title="Quitar media hora" ${d.finalizado?'disabled':''}>−½</button>
+            <button class="btn mini sec" onclick="addOT(${o.i},0.5)" title="Sumar media hora" ${d.finalizado?'disabled':''}>+½</button>
+            <button class="btn mini sec" onclick="addOT(${o.i},1)" title="Sumar una hora" ${d.finalizado?'disabled':''}>+1h</button>
+            <button class="btn mini sec" onclick="resetSalida(${o.i})" title="Volver a jornada regular" ${d.finalizado?'disabled':''}>↺</button></div></td>
+      <td><select onchange="setFK('${o.k}','ruta',this.value)" ${d.finalizado?'disabled':''} style="${d.finalizado?'background:#f1f3f5;cursor:not-allowed':''}">${optZonas(f.ruta||'')}</select>
+          ${o.c.zona?'<div style="font-size:11px;color:#6b7787">habitual: '+esc(o.c.zona)+'</div>':'<div style="font-size:11px;color:#6b7787">flexible</div>'}</td>
+      <td>${x.dias} d · ${nHoras(x.ot)} h OT</td>
+      <td>${f.enviado?'<span class="est env">✓ enviado</span>':'<span class="est noenv">sin enviar</span>'}</td>
+      <td style="white-space:nowrap">${etq}
+        <div style="margin-top:3px">
+          ${telNorm(o.c.tel)?`<button class="btn mini wa" onclick="enviarWA(${o.i},false)" ${d.finalizado?'disabled':''}>WA</button>`:''}
+          <button class="btn mini ok" onclick="setEstado(${o.i},'confirmado')" ${d.finalizado?'disabled':''}>✓</button>
+          <button class="btn mini rojo" onclick="setEstado(${o.i},'rechazado')" ${d.finalizado?'disabled':''}>✕</button>
+          <button class="btn mini sec" onclick="setAus('${o.k}','${fechaAct}','off')" title="Marcar OFF hoy" ${d.finalizado?'disabled':''}>OFF</button>
+        </div></td></tr>`;
+  };
+
+  const grupo=(tipo,titulo)=>{
+    const g=lista.filter(o=>(o.c.tipo||'FT')===tipo);
+    if(!g.length) return '';
+    const n=g.filter(o=>!o.aus).length;
+    return `<tr class="sep"><td colspan="8">${titulo} <span style="font-weight:400;opacity:.75">— ${n} de ${g.length} trabajando</span></td></tr>`
+      + g.map(pintaFila).join('');
+  };
+  const filas=grupo('FT','FULL TIME')+grupo('PT','PART TIME');
+
+  const trabajan=d.filas.filter(f=>f.k).length;
+  const totReg=d.filas.reduce((s,f)=>s+regFila(f),0), totOt=d.filas.reduce((s,f)=>s+otFila(f),0);
+  const sinCond=d.filas.filter(f=>!f.k).length;
+
+  const nOff=lista.filter(o=>o.aus).length;
+  const totOtFinal=d.filas.reduce((s,f)=>s+otFila(f),0);
+  out.innerHTML=barraVista()+`
+    ${d.finalizado?'<div class="aviso ok" style="border-left:4px solid var(--ok)"><b>🏁 Día terminado</b> — Cambios bloqueados. Overtime total: '+nHoras(totOtFinal)+' h. <button class="btn mini sec" onclick="finalizarDia()" style="margin-left:auto">Deshacer</button></div>':''}
+    <div class="barra noimp">
+      <button class="btn wa" onclick="ir('envio')" ${d.finalizado?'disabled':''}>Enviar horarios</button>
+      <button class="btn sec" onclick="ir('ausencias')" ${d.finalizado?'disabled':''}>Programar ausencias</button>
+      <button class="btn ok" onclick="finalizarDia()">${d.finalizado?'↺ Reabrir día terminado':'🏁 Terminar día'}</button>
+      <span style="flex:1"></span>
+      <button class="btn sec" onclick="copiarDia()">Copiar lista</button>
+      <button class="btn sec" onclick="exportCSV()">CSV</button>
+      <button class="btn sec" onclick="window.print()">Imprimir</button>
+    </div>
+    <p class="hint" style="margin:12px 0 6px">
+      <b>${trabajan}</b> trabajan${nOff?' · <b style="color:#b02a37">'+nOff+' ausentes</b>':''}
+      &nbsp;|&nbsp; Regulares: <b>${nHoras(totReg)} h</b> · Overtime: <b class="${totOt>0?'ot':''}">${nHoras(totOt)} h</b>
+    </p>
+    <table>
+      <thead><tr><th>Conductor</th><th style="width:95px">Entrada</th><th style="width:115px">Salida</th>
+      <th style="width:105px">Overtime</th><th style="width:150px">Zona</th><th style="width:105px">Últimos 7 días</th>
+      <th style="width:95px">Envío</th><th style="width:130px">Confirmación</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <p class="hint" style="margin-top:10px">Todos trabajan salvo los marcados en rojo. Escribe la hora de entrada y la salida se calcula sola a las ${cfg.jornada} h.
+      El overtime va en bloques de <b>media hora</b>: usa <b>+½</b> / <b>+1h</b> para sumarlo y <b>−½</b> para quitarlo. Menos de 0.5 h no cuenta.
+      La zona viene puesta con la habitual de cada uno; los flexibles quedan vacíos para que elijas.
+      Para dar un día libre usa el botón <b>OFF</b> de la fila, o la pestaña <b>Ausencias</b> si es de varios días.</p>`;
+}
+
+function pintarDia(){
+  const d=D(), out=document.getElementById('diaOut');
+  document.getElementById('fDia').value=fechaAct;
+  document.getElementById('etqDia').textContent=nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct));
+  document.getElementById('fDesc').value=cfg.desc;
+  document.getElementById('fJor').value=cfg.jornada;
+  document.getElementById('fMaxOt').value=cfg.maxOt;
+  /* Botón Finalizar + bloqueo visual de las cajas de acciones */
+  const btnF=document.getElementById('btnFinalizar');
+  btnF.textContent=d.finalizado?'↺ Reabrir día terminado':'🏁 Terminar día';
+  btnF.className=d.finalizado?'btn sec':'btn ok';
+  const cA=document.getElementById('cajaAcciones'), cAv=document.getElementById('cajaAviso');
+  [cA,cAv].forEach(el=>{ if(!el) return;
+    el.style.opacity=d.finalizado?'0.55':'';
+    el.querySelectorAll('input,select,textarea,button').forEach(x=>{
+      if(x.id==='btnFinalizar') return;            // el de finalizar siempre activo
+      x.disabled=!!d.finalizado;
+    });
+  });
+  const ta2=document.getElementById('fAviso');
+  if(ta2) ta2.style.background=d.finalizado?'#f1f3f5':'';
+
+  if(vista==='conductor'){ pintarDiaConductores(out,d); return; }
+  if(vista==='cierre'){ pintarDiaCierre(out,d); return; }
+
+  if(!d.filas.length){
+    out.innerHTML=barraVista()+'<div class="aviso warn">Este día no tiene salidas. Usa <b>Armar día con la plantilla</b>, <b>Copiar del día anterior</b>, o cambia a la vista <b>Por conductor</b>.</div>';
+    return;
+  }
+  const finPrev=finesDelDia(isoMas(fechaAct,-1));
+  const orden=d.filas.map((f,i)=>({f:f,i:i})).sort((a,b)=>(hora(a.f.h)||0)-(hora(b.f.h)||0));
+  const opts=(sel)=>['<option value="">— sin asignar —</option>'].concat(
+      conductores.filter(c=>c.act&&(c.n||'').trim()).map(c=>{
+        const k=clave(c);
+        return `<option value="${esc(k)}" ${k===sel?'selected':''}>${esc(c.n)}</option>`;})).join('');
+
+  const filas=orden.map(o=>{
+    const f=o.f, i=o.i, c=f.k?condDe(f.k):null;
+    const hIni=hora(f.h);
+    let corto=false;
+    if(f.k && cfg.desc>0 && finPrev[f.k]!==undefined && hIni!==null) corto=((24+hIni)-finPrev[f.k])<cfg.desc;
+    const est=f.estado||'pendiente';
+    const etq = !f.k?'':(est==='confirmado'?'<span class="est conf">Confirmado</span>':est==='rechazado'?'<span class="est rech">Rechazado</span>':'<span class="est pend">Pendiente</span>');
+    const ot=otFila(f), falta=faltaFila(f);
+    const celdaOT = ot>0 ? '<b class="ot">+'+nHoras(ot)+' h</b>'
+                    : (falta>0 ? '<span style="color:#9a6700">−'+nHoras(falta)+' h</span>' : '—');
+    return `<tr class="${!f.k?'vacia':(ot>0?'fila-ot':(corto?'fila-med':''))}">
+      <td><select onchange="setF(${i},'h',this.value)" style="font-weight:600">${optHoras(f.h)}</select></td>
+      <td><select onchange="setF(${i},'f',this.value)">${optHoras(f.f)}</select>
+          <div style="font-size:11px;color:#6b7787">regular: ${finJornada(f.h)}</div></td>
+      <td>${nHoras(regFila(f))}</td>
+      <td>${celdaOT}</td>
+      <td><input type="text" value="${esc(f.ruta)}" oninput="setF(${i},'ruta',this.value)"></td>
+      <td><select onchange="setF(${i},'k',this.value)">${opts(f.k)}</select>
+          ${corto?'<div style="font-size:11px;color:#9a6700">⚠ descanso corto</div>':''}
+          ${c&&!c.tel?'<div style="font-size:11px;color:#b02a37">sin teléfono</div>':''}</td>
+      <td>${f.k?(f.enviado?'<span class="est env">✓ enviado</span>':'<span class="est noenv">sin enviar</span>'):'—'}</td>
+      <td>${etq}</td>
+      <td style="white-space:nowrap">
+        <button class="btn mini sec" onclick="addOT(${i},-0.5)" title="Quitar media hora">−½</button>
+        <button class="btn mini sec" onclick="addOT(${i},0.5)" title="Sumar media hora de overtime">+½</button>
+        <button class="btn mini sec" onclick="addOT(${i},1)" title="Sumar 1 hora de overtime">+1h</button>
+        <button class="btn mini sec" onclick="resetSalida(${i})" title="Volver a jornada regular">↺</button>
+        ${f.k&&telNorm(c?c.tel:'')?`<button class="btn mini wa" onclick="enviarWA(${i},false)">WA</button>`:''}
+        ${f.k?`<button class="btn mini ok" onclick="setEstado(${i},'confirmado')">✓</button>
+               <button class="btn mini rojo" onclick="setEstado(${i},'rechazado')">✕</button>`:''}
+        <button class="btn del" onclick="quitarFila(${i})">🗑</button>
+      </td></tr>`;}).join('');
+
+  const asignados=d.filas.filter(f=>f.k).length, huecos=d.filas.length-asignados;
+  const totReg=d.filas.reduce((s,f)=>s+regFila(f),0), totOt=d.filas.reduce((s,f)=>s+otFila(f),0);
+  const conOt=d.filas.filter(f=>f.k&&otFila(f)>0);
+  out.innerHTML=barraVista()+`
+    <div class="barra noimp" style="margin-top:0">
+      <button class="btn wa" onclick="ir('envio')">Enviar horarios</button>
+      <button class="btn sec" onclick="copiarDia()">Copiar lista del día</button>
+      <button class="btn sec" onclick="exportCSV()">CSV para nómina</button>
+      <button class="btn sec" onclick="window.print()">Imprimir</button>
+      <button class="btn sec" onclick="descargarICS()">Calendario (.ics)</button>
+    </div>
+    <p class="hint" style="margin:12px 0 6px">
+      ${d.filas.length} salidas · ${asignados} asignadas${huecos?' · <b style="color:#b02a37">'+huecos+' sin conductor</b>':''}
+      &nbsp;|&nbsp; Horas regulares: <b>${nHoras(totReg)}</b> ·
+      Overtime: <b class="${totOt>0?'ot':''}">${nHoras(totOt)} h</b>${conOt.length?' ('+conOt.length+' conductor'+(conOt.length>1?'es':'')+')':''}
+    </p>
+    <table>
+      <thead><tr><th>Entrada</th><th>Salida real</th><th>Reg.</th><th>Overtime</th><th>Ruta / Zona</th><th>Conductor</th><th>Envío</th><th>Confirmación</th><th>Acción</th></tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <p class="hint" style="margin-top:10px">La salida se calcula sola a las <b>${cfg.jornada} horas</b> de la entrada. Si escribes una salida más tarde, la diferencia entra como overtime automáticamente,
+      redondeada a bloques de <b>media hora</b> (menos de 0.5 h no cuenta). Los botones <b>−½ / +½ / +1h</b> lo ajustan directo.</p>`;
+}
+function setEstado(i,e){ if(bloqueado()) return; const f=D().filas[i]; f.estado=(f.estado===e?'pendiente':e); f.ts=Date.now(); render(); guardar(); }
+
+/* ===================== MENSAJES / WHATSAPP ===================== */
+function mensajeAviso(i){
+  const f=D().filas[i], c=f.k?condDe(f.k):null;
+  const av=(D().aviso||'').trim();
+  if(!av) return '';
+  return 'Hola'+(c?' '+c.n:'')+', aviso para '+cuandoTxt(fechaAct)+' '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+':\n\n'+av;
+}
+function mensaje(i){
+  const f=D().filas[i], c=f.k?condDe(f.k):null; if(!c) return '';
+  const ot=otFila(f);
+  const av=(D().aviso||'').trim();
+  const tpl=(cfg.tpl||TPL_DEF);
+  const base=(tpl.indexOf('{aviso}')>=0 || !av) ? tpl : tpl+'\n\n📌 AVISO: {aviso}';
+  return base.replace(/{aviso}/g, av)
+    .replace(/{nombre}/g,c.n)
+    .replace(/{cuando}/g,cuandoTxt(fechaAct))
+    .replace(/{dia}/g,nombreDia(fechaAct))
+    .replace(/{fecha}/g,fmtF(dISO(fechaAct)))
+    .replace(/{hora}/g,f.h).replace(/{fin}/g,f.f)
+    .replace(/{ruta}/g,f.ruta||'—')
+    .replace(/{ot}/g,nHoras(ot))
+    .replace(/{total}/g,nHoras(totalFila(f)))
+    .replace(/{otTxt}/g, ot>0 ? '- Incluye '+nHoras(ot)+' h de overtime\n' : '');
+}
+function enviarWA(i,avanzar,soloAviso){
+  const f=D().filas[i], c=f.k?condDe(f.k):null;
+  const t=c?telNorm(c.tel):'';
+  if(!t){ alert('Ese conductor no tiene teléfono válido.'); return; }
+  const txt = soloAviso ? mensajeAviso(i) : mensaje(i);
+  const url = cfg.app==='api'
+    ? 'https://api.whatsapp.com/send?phone='+t+'&text='+encodeURIComponent(txt)
+    : 'https://wa.me/'+t+'?text='+encodeURIComponent(txt);
+  window.open(url,'_blank');
+  if(soloAviso) f.avisado=Date.now(); else f.enviado=Date.now();
+  if(avanzar) colaIdx++;
+  render(); guardar();
+}
+function iniciarColaAviso(){
+  if(!(D().aviso||'').trim()){ alert('Escribe primero el aviso del día.'); return; }
+  colaTipo='aviso';
+  cola=D().filas.map((f,i)=>i).filter(i=>D().filas[i].k && !ausDe(D().filas[i].k,fechaAct));
+  colaIdx=0;
+  if(!cola.length){ alert('No hay conductores asignados hoy.'); return; }
+  render(); ir('envio');
+}
+
+/* ============ INVITACIONES DE GOOGLE CALENDAR ============
+   Abre el evento prellenado con el conductor como invitado.
+   Al guardarlo, Google le manda la invitación a su correo y su
+   respuesta (Sí / No) te llega a ti. Solo para quien tenga correo. */
+function urlCal(i){
+  const f=D().filas[i], c=f.k?condDe(f.k):null;
+  if(!c||!c.mail||f.aus) return null;
+  const h=hora(f.h); if(h===null) return null;
+  const ini=dISO(fechaAct); ini.setHours(Math.floor(h),Math.round((h%1)*60),0,0);
+  const fin=new Date(ini.getTime()+totalFila(f)*3600000);
+  const z=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')
+           +'T'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00';
+  const tz=(Intl.DateTimeFormat().resolvedOptions().timeZone)||'UTC';
+  const det='Entrada: '+f.h+'\nSalida estimada: '+f.f
+    +(otFila(f)>0?'\nIncluye '+nHoras(otFila(f))+' h de overtime':'')
+    +(f.ruta?'\nRuta: '+f.ruta:'')+'\n\nPor favor confirma con Sí o No en esta invitación.';
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    +'&text='+encodeURIComponent('Turno — '+c.n)
+    +'&dates='+z(ini)+'/'+z(fin)
+    +'&ctz='+encodeURIComponent(tz)
+    +'&details='+encodeURIComponent(det)
+    +(f.ruta?'&location='+encodeURIComponent(f.ruta):'')
+    +'&add='+encodeURIComponent(c.mail);
+}
+function enviarCal(i,avanzar){
+  const u=urlCal(i);
+  if(!u){ alert('Ese conductor no tiene correo registrado (los Part Time no lo tienen).'); return; }
+  window.open(u,'_blank');
+  D().filas[i].cal=Date.now();
+  if(avanzar) colaIdx++;
+  render(); guardar();
+}
+function conCorreo(){
+  return D().filas.map((f,i)=>({f,i})).filter(o=>o.f.k&&!o.f.aus&&(condDe(o.f.k)||{}).mail);
+}
+
+/* ===================== COLA ===================== */
+function iniciarCola(soloPend){
+  const d=D(); colaTipo='wa';
+  cola=d.filas.map((f,i)=>i).filter(i=>d.filas[i].k && !d.filas[i].aus && (!soloPend || !d.filas[i].enviado));
+  colaIdx=0;
+  if(!cola.length){ alert(soloPend?'Todos los del día ya tienen su horario enviado.':'No hay conductores asignados.'); return; }
+  render(); ir('envio');
+}
+function iniciarColaCal(soloPend){
+  colaTipo='cal';
+  cola=conCorreo().filter(o=>!soloPend||!o.f.cal).map(o=>o.i);
+  colaIdx=0;
+  if(!cola.length){ alert(soloPend?'Ya se invitó a todos los que tienen correo.':'Ningún conductor asignado tiene correo registrado.'); return; }
+  render(); ir('envio');
+}
+function pintarCola(){
+  const out=document.getElementById('colaOut');
+  if(!cola.length){ out.innerHTML=''; return; }
+  if(colaIdx>=cola.length){
+    out.innerHTML='<div class="aviso ok">Envío terminado: '+cola.length+' conductor(es). Ahora espera las confirmaciones en <b>Alertas</b>.</div>'+
+      '<div class="barra"><button class="btn sec" onclick="cola=[];render()">Cerrar</button></div>'; return;
+  }
+  const i=cola[colaIdx], f=D().filas[i], c=condDe(f.k), t=telNorm(c?c.tel:'');
+  if(colaTipo==='aviso'){
+    out.innerHTML=`<div class="cola" style="border-color:#128c4a">
+      <div style="font-size:12px;color:#6b7787">Aviso ${colaIdx+1} de ${cola.length}</div>
+      <div class="quien">${esc(c?c.n:'?')}</div>
+      <div style="font-size:12.5px;color:#6b7787">${t?'+'+t:'<b style="color:#b02a37">SIN TELÉFONO</b>'}</div>
+      <pre>${esc(mensajeAviso(i))}</pre>
+      <div class="barra" style="margin-top:0">
+        ${t?`<button class="btn wa" onclick="enviarWA(${i},true,true)">Abrir WhatsApp y siguiente ▸</button>`:''}
+        <button class="btn sec" onclick="colaIdx++;render()">Saltar</button>
+        <button class="btn sec" onclick="cola=[];render()">Detener</button>
+      </div></div>`;
+    return;
+  }
+  if(colaTipo==='cal'){
+    out.innerHTML=`<div class="cola">
+      <div style="font-size:12px;color:#6b7787">Invitando ${colaIdx+1} de ${cola.length} — Google Calendar</div>
+      <div class="quien">${esc(c?c.n:'?')}</div>
+      <div style="font-size:12.5px;color:#6b7787">${esc(c?c.mail:'')} · entrada ${esc(f.h)} · salida ${esc(f.f)}${f.ruta?' · '+esc(f.ruta):''}</div>
+      <p class="hint" style="margin:10px 0">Se abre el evento ya lleno con el conductor como invitado. Solo dale <b>Guardar</b> y luego <b>Enviar</b> para que le llegue la invitación.</p>
+      <div class="barra" style="margin-top:0">
+        <button class="btn" onclick="enviarCal(${i},true)">Abrir Calendar y siguiente ▸</button>
+        <button class="btn sec" onclick="colaIdx++;render()">Saltar</button>
+        <button class="btn sec" onclick="cola=[];render()">Detener</button>
+      </div></div>`;
+    return;
+  }
+  out.innerHTML=`<div class="cola">
+    <div style="font-size:12px;color:#6b7787">Enviando ${colaIdx+1} de ${cola.length}</div>
+    <div class="quien">${esc(c?c.n:'?')}</div>
+    <div style="font-size:12.5px;color:#6b7787">${t?'+'+t:'<b style="color:#b02a37">SIN TELÉFONO</b>'} · entrada ${esc(f.h)} · ${esc(f.ruta||'sin ruta')}</div>
+    <pre>${esc(mensaje(i))}</pre>
+    <div class="barra" style="margin-top:0">
+      ${t?`<button class="btn wa" onclick="enviarWA(${i},true)">Abrir WhatsApp y siguiente ▸</button>`:''}
+      <button class="btn sec" onclick="colaIdx++;render()">Saltar</button>
+      <button class="btn sec" onclick="cola=[];render()">Detener</button>
+    </div></div>`;
+}
+function pintarEnvioTabla(){
+  const d=D(), out=document.getElementById('envioTabla');
+  const conK=d.filas.map((f,i)=>({f,i})).filter(o=>o.f.k&&!o.f.aus).sort((a,b)=>(hora(a.f.h)||0)-(hora(b.f.h)||0));
+  const sin=conK.filter(o=>!o.f.enviado).length;
+  if(!conK.length){ out.innerHTML='<div class="aviso warn">No hay conductores asignados para '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+'. Arma el día primero.</div>'; return; }
+  const sinCal=conK.filter(o=>(condDe(o.f.k)||{}).mail && !o.f.cal).length;
+  const pintaEnvio=(o)=>{
+    const c=condDe(o.f.k), t=telNorm(c?c.tel:''), m=c?c.mail:'';
+    return `<tr class="${!o.f.enviado&&!o.f.cal?'fila-med':''}">
+      <td><b>${esc(c?c.n:'?')}</b><div style="font-size:11px;color:#6b7787">${c&&c.tipo==='PT'?'Part Time':'Full Time'}</div></td>
+      <td>${esc(o.f.h)}</td><td>${esc(o.f.ruta||'—')}</td>
+      <td>${o.f.enviado?'<span class="est env">WA '+new Date(o.f.enviado).toLocaleTimeString().slice(0,5)+'</span>':(t?'<span class="est noenv">sin enviar</span>':'<span style="color:#b02a37;font-size:11.5px">sin teléfono</span>')}</td>
+      <td>${o.f.cal?'<span class="est env">✓ invitado</span>':(m?'<span class="est noenv">sin invitar</span>':'<span style="color:#6b7787;font-size:11.5px">sin correo</span>')}</td>
+      <td>${o.f.estado==='confirmado'?'<span class="est conf">Confirmado</span>':o.f.estado==='rechazado'?'<span class="est rech">Rechazado</span>':'<span class="est pend">Pendiente</span>'}</td>
+      <td style="white-space:nowrap">
+        ${t?`<button class="btn mini wa" onclick="enviarWA(${o.i},false)">WA</button>`:''}
+        ${m?`<button class="btn mini" onclick="enviarCal(${o.i},false)">Calendar</button>`:''}
+        <button class="btn mini sec" onclick="copiar(mensaje(${o.i}),'Mensaje copiado.')">Copiar</button>
+      </td></tr>`;};
+  const grupoEnv=(tipo,titulo)=>{
+    const g=conK.filter(o=>((condDe(o.f.k)||{}).tipo||'FT')===tipo);
+    if(!g.length) return '';
+    return `<tr class="sep"><td colspan="7">${titulo} — ${g.length}</td></tr>`+g.map(pintaEnvio).join('');
+  };
+  const filas=grupoEnv('FT','FULL TIME · avisar por Calendar y WhatsApp')
+             +grupoEnv('PT','PART TIME · solo WhatsApp');
+  out.innerHTML=`
+    <div class="barra" style="margin-top:0">
+      <span style="font-weight:600">${nombreDia(fechaAct)} ${fmtF(dISO(fechaAct))}</span>
+      <button class="btn wa" onclick="iniciarCola(true)">▸ WhatsApp a los ${sin} sin enviar</button>
+      <button class="btn" onclick="iniciarColaCal(true)">▸ Invitar por Calendar (${sinCal})</button>
+      <button class="btn sec mini" onclick="iniciarCola(false)">Reenviar WhatsApp a todos</button>
+    </div>
+    <p class="hint" style="margin:12px 0 0">La invitación de Calendar solo aplica a quien tenga correo (los Full Time). Los Part Time se avisan por WhatsApp.</p>
+    <table style="margin-top:10px">
+      <thead><tr><th>Conductor</th><th>Entrada</th><th>Ruta</th><th>WhatsApp</th><th>Calendar</th><th>Confirmación</th><th>Acciones</th></tr></thead>
+      <tbody>${filas}</tbody></table>`;
+}
+
+/* ===================== ALERTAS ===================== */
+function horasPara(f){
+  const h=hora(f.h); if(h===null) return null;
+  const d=dISO(fechaAct); d.setHours(Math.floor(h), Math.round((h%1)*60),0,0);
+  return (d.getTime()-Date.now())/3600000;
+}
+function pintarAlertas(){
+  const d=D(), cont=document.getElementById('alertasOut'), banner=document.getElementById('bannerAlertas'), bdg=document.getElementById('bdg');
+  const asign=d.filas.map((f,i)=>({f,i})).filter(o=>o.f.k&&!o.f.aus);
+  const huecos=d.filas.filter(f=>!f.k).length;
+  const sinEnviar=asign.filter(o=>!o.f.enviado);
+  const sinTel=asign.filter(o=>{ const c=condDe(o.f.k); return !telNorm(c?c.tel:''); });
+  const rech=asign.filter(o=>o.f.estado==='rechazado');
+  const pend=asign.filter(o=>o.f.estado!=='confirmado'&&o.f.estado!=='rechazado');
+  const crit=pend.filter(o=>{ const h=horasPara(o.f); return h!==null&&h<4; });
+  const med=pend.filter(o=>{ const h=horasPara(o.f); return h!==null&&h>=4&&h<12; });
+
+  const total=pend.length+rech.length+huecos;
+  bdg.textContent=total; bdg.className='badge'+(total?'':' cero');
+
+  let b='';
+  const cab=`<span style="font-weight:700">${nombreDia(fechaAct)} ${fmtF(dISO(fechaAct))}:</span>`;
+
+  // Días pasados sin cerrar: hay que registrar las horas reales
+  const abiertos=diasSinCerrar();
+  if(abiertos.length) b+=`<div class="alerta med"><b>🕒 Falta registrar las horas de ${abiertos.length} día(s)</b>
+    <span class="sp">${abiertos.slice(0,3).map(k=>nombreDia(k)+' '+fmtF(dISO(k))).join(' · ')}${abiertos.length>3?' y '+(abiertos.length-3)+' más':''}</span>
+    <button class="btn mini" onclick="setDia('${abiertos[0]}');setVista('cierre');ir('dia')">Registrar overtime</button></div>`;
+  if(huecos) b+=`<div class="alerta crit">${cab} <b>${huecos} salida(s) sin conductor</b>
+    <span class="sp"></span><button class="btn mini rojo" onclick="ir('dia')">Asignar</button></div>`;
+  if(sinEnviar.length) b+=`<div class="alerta crit">${cab} <b>${sinEnviar.length} todavía NO han recibido su horario</b>
+    <span class="sp"></span><button class="btn mini wa" onclick="iniciarCola(true)">Enviar ahora</button></div>`;
+  if(sinTel.length) b+=`<div class="alerta med">${cab} <b>${sinTel.length} sin teléfono registrado</b>
+    <span class="sp"></span><button class="btn mini sec" onclick="ir('conductores')">Completar</button></div>`;
+  const sinCal=asign.filter(o=>(condDe(o.f.k)||{}).mail && !o.f.cal);
+  if(sinCal.length) b+=`<div class="alerta med">${cab} <b>${sinCal.length} sin invitación de calendario</b>
+    <span class="sp">Tienen correo pero no se les ha mandado el evento.</span>
+    <button class="btn mini" onclick="iniciarColaCal(true)">Invitar</button></div>`;
+  if(rech.length) b+=`<div class="alerta crit">${cab} <b>${rech.length} rechazaron</b>
+    <span class="sp">Hay que reasignar esas salidas.</span><button class="btn mini rojo" onclick="ir('alertas')">Ver</button></div>`;
+  if(crit.length) b+=`<div class="alerta crit">${cab} <b>${crit.length} sin confirmar y entran en menos de 4 horas</b>
+    <span class="sp"></span><button class="btn mini rojo" onclick="ir('alertas')">Revisar</button></div>`;
+  if(med.length) b+=`<div class="alerta med">${cab} <b>${med.length} sin confirmar</b><span class="sp">Entran dentro de 12 horas.</span>
+    <button class="btn mini sec" onclick="ir('alertas')">Revisar</button></div>`;
+
+  // Overtime del día y acumulado de 7 días
+  const otHoy=d.filas.filter(f=>f.k&&otFila(f)>0);
+  const totOtHoy=d.filas.reduce((s,f)=>s+otFila(f),0);
+  if(otHoy.length) b+=`<div class="alerta ot">${cab} <b>${nHoras(totOtHoy)} h de overtime</b>
+    <span class="sp">${otHoy.map(f=>{const c=condDe(f.k);return (c?c.n:'?')+' +'+nHoras(otFila(f))+'h';}).join(' · ')}</span></div>`;
+  if(cfg.maxOt>0){
+    const carga=cargaReciente(isoMas(fechaAct,1),7);
+    const pasados=Object.keys(carga).filter(k=>carga[k].ot>cfg.maxOt);
+    if(pasados.length) b+=`<div class="alerta med">${cab} <b>${pasados.length} sobre el tope de ${cfg.maxOt} h de OT en 7 días</b>
+      <span class="sp">${pasados.map(k=>{const c=condDe(k);return (c?c.n:k)+' '+nHoras(carga[k].ot)+'h';}).join(' · ')}</span>
+      <button class="btn mini sec" onclick="ir('historial')">Ver reporte</button></div>`;
+  }
+  if(!b && asign.length) b=`<div class="alerta bien">${cab} <b>Todo enviado y confirmado</b><span class="sp">${asign.length} conductores.</span></div>`;
+  banner.innerHTML=b;
+
+  if(!asign.length){ cont.innerHTML='<div class="aviso warn">No hay conductores asignados para este día.</div>'; return; }
+
+  const orden=asign.slice().sort((a,b)=>{
+    const na=(a.f.estado==='rechazado')?3:(a.f.estado==='confirmado'?0:2);
+    const nb=(b.f.estado==='rechazado')?3:(b.f.estado==='confirmado'?0:2);
+    if(na!==nb) return nb-na;
+    return (horasPara(a.f)||999)-(horasPara(b.f)||999);
+  });
+
+  const filas=orden.map(o=>{
+    const f=o.f, c=condDe(f.k), h=horasPara(f);
+    let cuando='—';
+    if(h!==null) cuando = h<0?'<b style="color:#b02a37">ya entró</b>'
+      : h<4?'<b style="color:#b02a37">en '+Math.round(h*10)/10+' h</b>'
+      : h<12?'<b style="color:#9a6700">en '+Math.round(h)+' h</b>' : 'en '+Math.round(h)+' h';
+    const cls=(f.estado==='rechazado'||(f.estado!=='confirmado'&&h!==null&&h<4))?'fila-crit'
+      :(f.estado!=='confirmado'&&h!==null&&h<12?'fila-med':'');
+    const etq=f.estado==='confirmado'?'<span class="est conf">Confirmado</span>':f.estado==='rechazado'?'<span class="est rech">Rechazado</span>':'<span class="est pend">Pendiente</span>';
+    const libres=f.estado==='rechazado'?reemplazos(f.k):[];
+    return `<tr class="${cls}">
+      <td><b>${esc(c?c.n:'?')}</b><div style="font-size:11.5px;color:#6b7787">${esc(c?c.tel:'')}</div></td>
+      <td><b>${esc(f.h)}</b><div style="font-size:11.5px;color:#6b7787">${esc(f.ruta||'')}</div></td>
+      <td>${cuando}</td>
+      <td>${f.enviado?'<span class="est env">✓ enviado</span>':'<span class="est noenv">sin enviar</span>'}</td>
+      <td>${etq}${f.estado==='rechazado'?'<div style="font-size:11px;color:#b02a37">Libres: '+(libres.length?libres.map(esc).join(', '):'nadie')+'</div>':''}</td>
+      <td><input type="text" value="${esc(f.nota||'')}" placeholder="Nota…" oninput="D().filas[${o.i}].nota=this.value;guardar()"></td>
+      <td style="white-space:nowrap">
+        <button class="btn mini ok" onclick="setEstado(${o.i},'confirmado')">✓</button>
+        <button class="btn mini rojo" onclick="setEstado(${o.i},'rechazado')">✕</button>
+        ${telNorm(c?c.tel:'')?`<button class="btn mini wa" onclick="enviarWA(${o.i},false)">${f.enviado?'Recordar':'Enviar'}</button>`:''}
+      </td></tr>`;}).join('');
+
+  cont.innerHTML=`
+    <div class="barra" style="margin:0 0 14px">
+      <button class="btn wa" onclick="iniciarCola(true)">Enviar horarios pendientes</button>
+      <button class="btn sec" onclick="copiarPendientes()">Copiar lista de pendientes</button>
+      <button class="btn sec" onclick="confirmarTodos()">Marcar todos confirmados</button>
+    </div>
+    <table>
+      <thead><tr><th>Conductor</th><th>Entrada</th><th>Entra</th><th>Envío</th><th>Confirmación</th><th>Nota</th><th>Acción</th></tr></thead>
+      <tbody>${filas}</tbody></table>`;
+}
+function reemplazos(excluir){
+  const letra=letraDia(fechaAct), d=D(), ocup={};
+  d.filas.forEach(f=>{ if(f.k) ocup[f.k]=true; });
+  return conductores.filter(c=>{
+    if(!c.act||!(c.n||'').trim()) return false;
+    const k=clave(c);
+    if(k===excluir||ocup[k]||ausDe(k,fechaAct)) return false;
+    return (c.d||[]).indexOf(letra)>=0;
+  }).map(c=>c.n).slice(0,5);
+}
+function confirmarTodos(){
+  if(!confirm('¿Marcar como confirmados a todos los asignados de este día?')) return;
+  D().filas.forEach(f=>{ if(f.k){ f.estado='confirmado'; f.ts=Date.now(); } });
+  render(); guardar();
+}
+
+/* ===================== CONSOLIDADO MENSUAL ===================== */
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function mesDe(isoS){ return isoS.slice(0,7); }
+function rangoMes(n){
+  const h=new Date(); const d=new Date(h.getFullYear(), h.getMonth()+n, 1);
+  rDesde=iso(d);
+  rHasta=iso(new Date(d.getFullYear(), d.getMonth()+1, 0));
+  pintarConsolidado();
+}
+function rangoDias(n){
+  rHasta=isoHoy(); rDesde=isoMas(rHasta,-(n-1)); pintarConsolidado();
+}
+function tituloRango(){
+  const d=dISO(rDesde), h=dISO(rHasta);
+  if(rDesde.slice(0,7)===rHasta.slice(0,7) && d.getDate()===1 && h.getDate()===new Date(h.getFullYear(),h.getMonth()+1,0).getDate())
+    return MESES[d.getMonth()]+' '+d.getFullYear();
+  return 'Del '+fmtF(d)+' al '+fmtF(h);
+}
+function datosMes(){
+  const claves=Object.keys(dias).filter(k=>k>=rDesde && k<=rHasta && dias[k].filas.some(f=>f.k)).sort();
+  const porCond={};
+  claves.forEach(k=>{
+    dias[k].filas.forEach(f=>{
+      if(!f.k) return;
+      const c=condDe(f.k);
+      porCond[f.k]=porCond[f.k]||{n:c?c.n:'(conductor eliminado)', id:c?c.id||'':'', dias:0, reg:0, ot:0, tot:0, det:{}};
+      const x=porCond[f.k];
+      x.dias++; x.reg+=regFila(f); x.ot+=otFila(f); x.tot+=totalFila(f);
+      x.det[k]=(x.det[k]||0)+totalFila(f);
+      x.detOt=x.detOt||{}; x.detOt[k]=(x.detOt[k]||0)+otFila(f);
+    });
+  });
+  const abiertos=claves.filter(k=>!dias[k].cerrado);
+  return {claves, porCond, abiertos};
+}
+function pintarConsolidado(){
+  const out=document.getElementById('consOut');
+  if(rDesde>rHasta){ const t=rDesde; rDesde=rHasta; rHasta=t; }
+  document.getElementById('fDesde').value=rDesde;
+  document.getElementById('fHasta').value=rHasta;
+  const {claves,porCond,abiertos}=datosMes();
+  if(!claves.length){ out.innerHTML='<div class="aviso warn">No hay días con asignaciones entre el '+fmtF(dISO(rDesde))+' y el '+fmtF(dISO(rHasta))+'.</div>'; return; }
+
+  const lista=Object.keys(porCond).map(k=>Object.assign({k:k},porCond[k])).sort((a,b)=>a.n.localeCompare(b.n));
+  const tReg=lista.reduce((s,x)=>s+x.reg,0), tOt=lista.reduce((s,x)=>s+x.ot,0), tTot=lista.reduce((s,x)=>s+x.tot,0);
+
+  const resumen=lista.map(x=>`<tr class="${x.ot>0?'fila-ot':''}">
+      <td><b>${esc(x.n)}</b></td><td>${esc(x.id)}</td><td>${x.dias}</td>
+      <td>${nHoras(x.reg)}</td><td>${x.ot>0?'<b class="ot">'+nHoras(x.ot)+'</b>':'0'}</td><td><b>${nHoras(x.tot)}</b></td></tr>`).join('');
+
+  const cabDias=claves.map(k=>'<th title="'+nombreDia(k)+' '+fmtF(dISO(k))+'">'+dISO(k).getDate()+'/'+(dISO(k).getMonth()+1)+'</th>').join('');
+  const matriz=lista.map(x=>'<tr><td style="white-space:nowrap"><b>'+esc(x.n)+'</b></td>'
+    + claves.map(k=>{
+        const t=x.det[k], o=(x.detOt||{})[k]||0;
+        if(!t) return '<td style="color:#c8ced6">·</td>';
+        return '<td class="'+(o>0?'ot':'')+'" style="text-align:center">'+nHoras(t)+(o>0?'<sup>+'+nHoras(o)+'</sup>':'')+'</td>';
+      }).join('')
+    + '<td style="text-align:right"><b>'+nHoras(x.tot)+'</b></td></tr>').join('');
+
+  out.innerHTML=`
+    <h3 style="margin-top:18px">${tituloRango()}</h3>
+    ${abiertos.length?`<div class="aviso warn">⚠ ${abiertos.length} día(s) del periodo todavía sin cerrar: ${abiertos.map(k=>fmtF(dISO(k))).join(', ')}.
+      Las horas de esos días pueden cambiar. Ciérralos desde <b>Día → Cierre de horas</b>.</div>`:
+      '<div class="aviso ok">Todos los días del periodo están cerrados. El informe es definitivo.</div>'}
+    <table>
+      <thead><tr><th>Conductor</th><th>ID</th><th>Días</th><th>Horas regulares</th><th>Overtime</th><th>Total</th></tr></thead>
+      <tbody>${resumen}</tbody>
+      <tfoot><tr style="background:#eef3fa;font-weight:700">
+        <td colspan="3">TOTALES (${claves.length} días operados)</td>
+        <td>${nHoras(tReg)}</td><td class="ot">${nHoras(tOt)}</td><td>${nHoras(tTot)}</td></tr></tfoot>
+    </table>
+    <h3>Detalle día por día</h3>
+    <p class="hint">Horas pagadas por día. El número pequeño en morado es el overtime incluido.</p>
+    <div style="overflow-x:auto">
+      <table style="font-size:12px"><thead><tr><th>Conductor</th>${cabDias}<th style="text-align:right">Total</th></tr></thead>
+      <tbody>${matriz}</tbody></table>
+    </div>`;
+}
+function exportConsolidadoCSV(){
+  const {claves,porCond}=datosMes();
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const l=[['Consolidado de horas','Del '+fmtF(dISO(rDesde)),'al '+fmtF(dISO(rHasta)),'Jornada regular: '+cfg.jornada+' h'].map(q).join(';'),
+           ['Conductor','ID','Dias trabajados','Horas regulares','Overtime','Total'].map(q).join(';')];
+  Object.keys(porCond).map(k=>porCond[k]).sort((a,b)=>a.n.localeCompare(b.n)).forEach(x=>{
+    l.push([x.n,x.id,x.dias,nHoras(x.reg),nHoras(x.ot),nHoras(x.tot)].map(q).join(';'));
+  });
+  l.push('');
+  l.push(['Detalle diario'].map(q).join(';'));
+  l.push(['Conductor'].concat(claves.map(k=>fmtF(dISO(k)))).map(q).join(';'));
+  Object.keys(porCond).map(k=>porCond[k]).sort((a,b)=>a.n.localeCompare(b.n)).forEach(x=>{
+    l.push([x.n].concat(claves.map(k=>x.det[k]?nHoras(x.det[k]):'')).map(q).join(';'));
+  });
+  bajar('﻿'+l.join('\r\n'),'consolidado_'+rDesde+'_a_'+rHasta+'.csv','text/csv;charset=utf-8');
+}
+function exportConsolidadoHTML(){
+  const {claves,porCond,abiertos}=datosMes();
+  if(!claves.length){ alert('No hay datos en ese mes.'); return; }
+  const lista=Object.keys(porCond).map(k=>porCond[k]).sort((a,b)=>a.n.localeCompare(b.n));
+  const tReg=lista.reduce((s,x)=>s+x.reg,0), tOt=lista.reduce((s,x)=>s+x.ot,0), tTot=lista.reduce((s,x)=>s+x.tot,0);
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Consolidado ${tituloRango()}</title>
+<style>body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;margin:0;padding:16px;background:#f4f6f9;color:#1c2430;font-size:14px}
+.w{max-width:1000px;margin:0 auto;background:#fff;border:1px solid #d7dde6;border-radius:8px;padding:18px}
+h1{font-size:18px;margin:0 0 2px;color:#1f3864} .sub{color:#6b7787;font-size:12.5px;margin:0 0 16px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-bottom:22px}
+th{background:#1f3864;color:#fff;text-align:left;padding:8px;font-size:12px}
+td{border-bottom:1px solid #d7dde6;padding:6px 8px}
+tfoot td{background:#eef3fa;font-weight:700}
+.ot{color:#6b21a8;font-weight:700} sup{font-size:9px}
+.av{border-radius:6px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+.av.w2{background:#fff4ce;color:#9a6700;border:1px solid #f0dfa0}
+.av.ok{background:#e8f6ec;color:#1e7e34;border:1px solid #bfe3ca}
+.sc{overflow-x:auto}
+@media print{body{background:#fff;padding:0}.w{border:0}}
+</style></head><body><div class="w">
+<h1>Consolidado de horas — ${tituloRango()}</h1>
+<p class="sub">Periodo del ${fmtF(dISO(rDesde))} al ${fmtF(dISO(rHasta))} · ${claves.length} días operados ·
+Jornada regular de ${cfg.jornada} h por día; todo lo que pasa de ahí es overtime. Generado el ${fmtF(new Date())}.</p>
+${abiertos.length?`<div class="av w2">Atención: ${abiertos.length} día(s) sin cerrar (${abiertos.map(k=>fmtF(dISO(k))).join(', ')}). Esas horas pueden cambiar.</div>`
+  :'<div class="av ok">Todos los días del periodo están cerrados.</div>'}
+<table><thead><tr><th>Conductor</th><th>ID</th><th>Días</th><th>Horas regulares</th><th>Overtime</th><th>Total</th></tr></thead>
+<tbody>${lista.map(x=>`<tr><td>${esc(x.n)}</td><td>${esc(x.id)}</td><td>${x.dias}</td><td>${nHoras(x.reg)}</td><td class="ot">${nHoras(x.ot)}</td><td><b>${nHoras(x.tot)}</b></td></tr>`).join('')}</tbody>
+<tfoot><tr><td colspan="3">TOTALES (${claves.length} días operados)</td><td>${nHoras(tReg)}</td><td class="ot">${nHoras(tOt)}</td><td>${nHoras(tTot)}</td></tr></tfoot></table>
+<h1 style="font-size:15px">Detalle día por día</h1>
+<p class="sub">Horas pagadas por día; el número pequeño es el overtime incluido.</p>
+<div class="sc"><table style="font-size:12px"><thead><tr><th>Conductor</th>${claves.map(k=>'<th>'+dISO(k).getDate()+'</th>').join('')}<th>Total</th></tr></thead>
+<tbody>${lista.map(x=>'<tr><td>'+esc(x.n)+'</td>'+claves.map(k=>{
+  const t=x.det[k], o=(x.detOt||{})[k]||0;
+  return t?'<td style="text-align:center">'+nHoras(t)+(o>0?'<sup class="ot">+'+nHoras(o)+'</sup>':'')+'</td>':'<td style="color:#c8ced6">·</td>';
+}).join('')+'<td><b>'+nHoras(x.tot)+'</b></td></tr>').join('')}</tbody></table></div>
+</div></body></html>`;
+  bajar(html,'consolidado_'+rDesde+'_a_'+rHasta+'.html','text/html;charset=utf-8');
+}
+
+/* ============ EXPORTACIONES EN EL FORMATO DE 360 ESTATES ============
+   1) Log diario:      Fecha | Driver | Entrada | Salida | Horas | OT
+   2) Roster semanal:  Drivers Name | Email | (In Out Hrs OT)x7 | Total Hours | Extra Hours
+   3) Pago 25 al 24:   Date | Normal Hours | OT Hours | Extra Projects (P/T) | Extra Project/PT Code
+   Decimales con coma, horas en h:mm:ss, "off"/"sick" en la columna de entrada.
+==================================================================== */
+function dec(x){ return String(Math.round(x*100)/100).replace('.',','); }
+function hms(v){ const h=hora(v); return h===null?'' : hhmm(h)+':00'; }
+function ausTxt(v){ return v==='sick'?'sick':(v==='vac'?'vacation':'off'); }
+
+/* --- 1) Log diario, la hoja "Fecha / Driver / Entrada / Salida / Horas / OT" --- */
+function tabla360Log(){
+  const claves=[]; let x=rDesde;
+  while(x<=rHasta){ if((dias[x]&&dias[x].filas.some(f=>f.k))||offs[x]) claves.push(x); x=isoMas(x,1); }
+  const filas=[];
+  conductores.forEach(c=>{
+    const k=clave(c);
+    claves.forEach(d=>{
+      const a=ausDe(k,d);
+      if(a){ filas.push([fmtF(dISO(d)), c.n, ausTxt(a), '', '0', '0']); return; }
+      (dias[d]?dias[d].filas:[]).filter(f=>f.k===k).forEach(f=>{
+        filas.push([fmtF(dISO(d)), c.n, hms(f.h), hms(f.f), dec(totalFila(f)), dec(otFila(f))]);
+      });
+    });
+  });
+  return {enc:['Fecha','Driver','Entrada','Salida','Horas','OT'], filas:filas};
+}
+function copiar360Log(){
+  const t=tabla360Log();
+  if(!t.filas.length){ alert('No hay días con asignaciones en el rango seleccionado.'); return; }
+  copiar([t.enc.join('\t')].concat(t.filas.map(r=>r.join('\t'))).join('\n'),
+    t.filas.length+' filas copiadas. Pégalas en la hoja "Fecha / Driver / Entrada / Salida / Horas / OT".');
+}
+function csv360Log(){
+  const t=tabla360Log();
+  if(!t.filas.length){ alert('No hay datos en el rango.'); return; }
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  bajar('﻿'+[t.enc.map(q).join(';')].concat(t.filas.map(r=>r.map(q).join(';'))).join('\r\n'),
+    'log_'+rDesde+'_a_'+rHasta+'.csv','text/csv;charset=utf-8');
+}
+
+/* --- 2) Roster semanal en rejilla In/Out/Hrs/OT --- */
+function tabla360Semana(iniISO){
+  const dd=[]; for(let i=0;i<7;i++) dd.push(isoMas(iniISO,i));
+  const fila1=['Drivers Name','Email']; dd.forEach(d=>{ const t=fmtF(dISO(d)); fila1.push(t,t,t,t); });
+  fila1.push('Total Hours','Extra Hours');
+  const fila2=['Drivers Name','Email']; dd.forEach(()=>fila2.push('In','Out','Hrs','OT'));
+  fila2.push('Total Hours','Extra Hours');
+  const filas=[fila1,fila2];
+  conductores.filter(c=>c.act).forEach(c=>{
+    const k=clave(c); const r=[c.n, c.mail||'']; let tot=0, ot=0;
+    dd.forEach(d=>{
+      const a=ausDe(k,d);
+      if(a){ r.push(ausTxt(a),'','',''); return; }
+      const f=(dias[d]?dias[d].filas:[]).find(x=>x.k===k);
+      if(!f){ r.push('','','',''); return; }
+      r.push(hms(f.h), hms(f.f), dec(totalFila(f)), dec(otFila(f)));
+      tot+=totalFila(f); ot+=otFila(f);
+    });
+    r.push(dec(tot), dec(ot));
+    filas.push(r);
+  });
+  return filas;
+}
+function copiar360Semana(){
+  const ini=isoMas(rDesde, -((dISO(rDesde).getDay()+6)%7));  // lunes de la semana de "Desde"
+  const filas=tabla360Semana(ini);
+  copiar(filas.map(r=>r.join('\t')).join('\n'),
+    'Rejilla de la semana del '+fmtF(dISO(ini))+' copiada. Pégala en la hoja del roster semanal, sobre la fila de encabezados.');
+}
+
+/* --- 3) Timesheet de pago: del 25 de un mes al 24 del siguiente --- */
+function periodoPago(refISO){
+  const d=dISO(refISO);
+  let ini = d.getDate()>=25 ? new Date(d.getFullYear(),d.getMonth(),25)
+                            : new Date(d.getFullYear(),d.getMonth()-1,25);
+  const fin=new Date(ini.getFullYear(),ini.getMonth()+1,24);
+  return {ini:iso(ini), fin:iso(fin)};
+}
+function fmtUS(isoS){ const d=dISO(isoS); return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(); }
+function timesheetDe(k,p){
+  const c=condDe(k), out=[];
+  let dISOx=p.ini, tn=0, to=0;
+  while(dISOx<=p.fin){
+    const a=ausDe(k,dISOx);
+    const f=(dias[dISOx]?dias[dISOx].filas:[]).find(x=>x.k===k);
+    let nh='', oh='';
+    if(a){ nh=AUS_TXT[a]; }
+    else if(f){ nh=dec(regFila(f)); oh=dec(otFila(f)); tn+=regFila(f); to+=otFila(f); }
+    out.push({fecha:dISOx, nh:nh, oh:oh, pay:(dISOx===p.fin)});
+    dISOx=isoMas(dISOx,1);
+  }
+  return {c:c, filas:out, tn:tn, to:to};
+}
+function exportPagoCSV(){
+  const p=periodoPago(rHasta);
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const l=[];
+  conductores.filter(c=>c.act).forEach(c=>{
+    const t=timesheetDe(clave(c),p);
+    l.push(['Name',c.n.toUpperCase(),'',(c.tipo==='PT'?'Part Time':'Full Time'),(c.tipo==='PT'?'':'173.33 Hours')].map(q).join(';'));
+    l.push([('Pay Period: '+fmtUS(p.ini).replace(/\b(\d)\//g,'0$1/')+' - '+fmtUS(p.fin)),'','','',''].map(q).join(';'));
+    l.push(['Date','Normal Hours','OT Hours','Extra Projects (P/T)','Extra Project/PT Code'].map(q).join(';'));
+    t.filas.forEach(f=>l.push([fmtUS(f.fecha),f.nh,f.oh,'',(f.pay?'Pay Day':'')].map(q).join(';')));
+    l.push(['Total',dec(t.tn),dec(t.to),'0','0'].map(q).join(';'));
+    l.push(['Signed Employee','','','',''].map(q).join(';'));
+    l.push(['Signed HOD','','','',''].map(q).join(';'));
+    l.push('');
+  });
+  bajar('﻿'+l.join('\r\n'),'pago_'+p.ini+'_a_'+p.fin+'.csv','text/csv;charset=utf-8');
+}
+function exportPagoHTML(){
+  const p=periodoPago(rHasta);
+  const hojas=conductores.filter(c=>c.act).map(c=>{
+    const t=timesheetDe(clave(c),p);
+    return `<div class="hoja">
+      <table class="cab"><tr><td class="lbl">Name</td><td class="nom">${esc(c.n.toUpperCase())}</td>
+        <td>${c.tipo==='PT'?'Part Time':'Full Time'}</td><td>${c.tipo==='PT'?'':'173.33 Hours'}</td></tr>
+        <tr><td colspan="4" class="pp">Pay Period: ${fmtUS(p.ini)} - ${fmtUS(p.fin)}</td></tr></table>
+      <table class="det"><thead><tr><th>Date</th><th>Normal Hours</th><th>OT Hours</th><th>Extra Projects (P/T)</th><th>Extra Project/PT Code</th></tr></thead>
+      <tbody>${t.filas.map(f=>`<tr><td>${fmtUS(f.fecha)}</td><td>${f.nh}</td><td>${f.oh}</td><td></td><td>${f.pay?'<b>Pay Day</b>':''}</td></tr>`).join('')}
+      <tr class="tot"><td>Total</td><td>${dec(t.tn)}</td><td>${dec(t.to)}</td><td>0</td><td>0</td></tr></tbody></table>
+      <table class="firmas"><tr><td>Signed Employee</td><td class="linea"></td></tr><tr><td>Signed HOD</td><td class="linea"></td></tr></table>
+    </div>`;}).join('');
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Pay Period ${fmtUS(p.ini)} - ${fmtUS(p.fin)}</title>
+<style>body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;margin:0;padding:14px;font-size:13px;color:#1c2430}
+.hoja{background:#fff;border:1px solid #d7dde6;border-radius:6px;padding:14px;max-width:760px;margin:0 auto 18px;page-break-after:always}
+table{border-collapse:collapse;width:100%}
+.cab td{border:1px solid #b7bfc9;padding:5px 7px} .cab .lbl{background:#eef3fa;font-weight:700;width:70px}
+.cab .nom{font-weight:700} .cab .pp{background:#eef3fa;font-weight:700}
+.det{margin-top:10px} .det th{background:#1f3864;color:#fff;border:1px solid #1f3864;padding:5px;font-size:11.5px}
+.det td{border:1px solid #d7dde6;padding:4px 7px;text-align:center} .det td:first-child{text-align:left}
+.det .tot td{background:#eef3fa;font-weight:700}
+.firmas{margin-top:16px} .firmas td{padding:12px 4px 4px;font-weight:700;width:150px}
+.firmas .linea{border-bottom:1px solid #1c2430;width:auto}
+@media print{body{background:#fff;padding:0}.hoja{border:0;margin:0}}
+</style></head><body>${hojas}</body></html>`;
+  bajar(html,'pago_'+p.ini+'_a_'+p.fin+'.html','text/html;charset=utf-8');
+}
+
+/* ===================== HISTORIAL ===================== */
+function pintarHistorial(){
+  const out=document.getElementById('histOut');
+  const claves=Object.keys(dias).filter(k=>dias[k].filas.length).sort().reverse();
+  if(!claves.length){ out.innerHTML='<div class="aviso warn">Todavía no hay días armados.</div>'; return; }
+  const filas=claves.slice(0,60).map(k=>{
+    const d=dias[k], as=d.filas.filter(f=>f.k).length;
+    const env=d.filas.filter(f=>f.k&&f.enviado).length, cf=d.filas.filter(f=>f.estado==='confirmado').length;
+    const ot=d.filas.reduce((s,f)=>s+(f.k?otFila(f):0),0);
+    return `<tr><td>${nombreDia(k)} ${fmtF(dISO(k))}${d.finalizado?' <span class="est conf">finalizado</span>':''}</td><td>${d.filas.length}</td><td>${as}</td>
+      <td>${d.filas.length-as?'<b style="color:#b02a37">'+(d.filas.length-as)+'</b>':'0'}</td>
+      <td>${ot>0?'<b class="ot">'+nHoras(ot)+' h</b>':'—'}</td>
+      <td>${env}</td><td>${cf}</td>
+      <td><button class="btn mini sec" onclick="setDia('${k}');ir('dia')">Abrir</button></td></tr>`;}).join('');
+
+  const carga=cargaReciente(isoMas(fechaAct,1),periodo);
+  const lista=conductores.filter(c=>c.act).map(c=>{
+    const k=clave(c), x=carga[k]||{dias:0,horas:0,ot:0,reg:0};
+    return {n:c.n, id:c.id||'', dias:x.dias, reg:x.reg, ot:x.ot, tot:x.horas};
+  }).sort((a,b)=>b.ot-a.ot);
+  const totOt=lista.reduce((s,x)=>s+x.ot,0), totReg=lista.reduce((s,x)=>s+x.reg,0);
+  const cf=lista.map(x=>`<tr class="${cfg.maxOt>0&&x.ot>cfg.maxOt?'fila-ot':''}">
+      <td>${esc(x.n)}</td><td>${esc(x.id)}</td><td>${x.dias}</td><td>${nHoras(x.reg)}</td>
+      <td>${x.ot>0?'<b class="ot">'+nHoras(x.ot)+'</b>':'0'}</td><td>${nHoras(x.tot)}</td></tr>`).join('');
+
+  out.innerHTML=`
+    <table><thead><tr><th>Día</th><th>Salidas</th><th>Asignadas</th><th>Huecos</th><th>Overtime</th><th>Enviados</th><th>Confirmados</th><th></th></tr></thead>
+    <tbody>${filas}</tbody></table>
+
+    <h3>Reporte de horas y overtime</h3>
+    <div class="barra" style="margin:0 0 10px">
+      <span style="font-size:12px;color:#6b7787">Periodo:</span>
+      ${[7,15,30].map(n=>`<button class="btn mini ${periodo===n?'':'sec'}" onclick="periodo=${n};pintarHistorial()">Últimos ${n} días</button>`).join('')}
+      <span style="flex:1"></span>
+      <button class="btn sec mini" onclick="exportOT()">Descargar reporte (CSV)</button>
+    </div>
+    <p class="hint">Jornada regular de ${cfg.jornada} h por día. Todo lo que pase de ahí cuenta como overtime.
+      Totales del periodo: <b>${nHoras(totReg)} h regulares</b> · <b class="ot">${nHoras(totOt)} h de overtime</b>.</p>
+    <table><thead><tr><th>Conductor</th><th>ID</th><th>Días</th><th>Horas regulares</th><th>Overtime</th><th>Total</th></tr></thead>
+      <tbody>${cf}</tbody></table>`;
+}
+function exportOT(){
+  const carga=cargaReciente(isoMas(fechaAct,1),periodo);
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const desde=fmtF(dISO(isoMas(fechaAct,-(periodo-1)))), hasta=fmtF(dISO(fechaAct));
+  const l=[['Reporte de horas','Del '+desde,'al '+hasta,'Jornada regular: '+cfg.jornada+' h'].map(q).join(';'),
+           ['Conductor','ID','Dias','Horas regulares','Overtime','Total'].map(q).join(';')];
+  conductores.filter(c=>c.act).forEach(c=>{
+    const x=carga[clave(c)]||{dias:0,horas:0,ot:0,reg:0};
+    l.push([c.n,c.id||'',x.dias,nHoras(x.reg),nHoras(x.ot),nHoras(x.horas)].map(q).join(';'));
+  });
+  bajar('﻿'+l.join('\r\n'),'reporte_horas_'+fechaAct+'.csv','text/csv;charset=utf-8');
+}
+
+/* ===================== COPIAR / EXPORTAR ===================== */
+function copiar(txt,ok){
+  const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); alert(ok); }catch(e){ prompt('Copia manualmente:',txt); }
+  document.body.removeChild(ta);
+}
+function copiarDia(){
+  const d=D();
+  let t='Horario '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+':\n\n';
+  t+=d.filas.slice().sort((a,b)=>(hora(a.h)||0)-(hora(b.h)||0)).map(f=>{
+    const c=f.k?condDe(f.k):null, ot=otFila(f);
+    return `${f.h} a ${f.f} — ${c?c.n:'*** SIN CONDUCTOR ***'}${f.ruta?' — '+f.ruta:''}${ot>0?' (OT +'+nHoras(ot)+'h)':''}`;}).join('\n');
+  const totOt=d.filas.reduce((s,f)=>s+otFila(f),0);
+  if(totOt>0) t+='\n\nOvertime del día: '+nHoras(totOt)+' h.';
+  copiar(t,'Lista del día copiada.');
+}
+function copiarPendientes(){
+  const d=D();
+  const p=d.filas.map((f,i)=>({f,i})).filter(o=>o.f.k&&o.f.estado!=='confirmado');
+  if(!p.length){ alert('No hay pendientes.'); return; }
+  let t='Pendientes de confirmar — '+nombreDia(fechaAct)+' '+fmtF(dISO(fechaAct))+':\n\n';
+  t+=p.map(o=>{ const c=condDe(o.f.k);
+    return `• ${c?c.n:'?'}${c&&c.tel?' ('+c.tel+')':''} — entrada ${o.f.h} — ${o.f.estado==='rechazado'?'RECHAZÓ':(o.f.enviado?'sin confirmar':'SIN ENVIAR')}`;}).join('\n');
+  copiar(t,'Lista copiada.');
+}
+function exportCSV(){
+  const d=D(), q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const enc=['Fecha','Dia','Entrada','Salida','Horas regulares','Overtime','Total','Ruta','Conductor','Telefono','Enviado','Confirmacion'];
+  const l=[enc.map(q).join(';')].concat(d.filas.map(f=>{
+    const c=f.k?condDe(f.k):null;
+    return [fmtF(dISO(fechaAct)),nombreDia(fechaAct),f.h,f.f,nHoras(regFila(f)),nHoras(otFila(f)),nHoras(totalFila(f)),f.ruta,
+      c?c.n:'SIN CONDUCTOR', c?c.tel:'', f.enviado?'Si':'No', f.k?f.estado:''].map(q).join(';');}));
+  bajar('﻿'+l.join('\r\n'),'roster_'+fechaAct+'.csv','text/csv;charset=utf-8');
+}
+function icsF(d){ return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+'T'+
+  String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0')+'00'; }
+function descargarICS(){
+  const d=D();
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Roster Diario//ES\r\nCALSCALE:GREGORIAN\r\n';
+  d.filas.filter(f=>f.k).forEach((f,ix)=>{
+    const c=condDe(f.k), h=hora(f.h); if(h===null) return;
+    const ini=dISO(fechaAct); ini.setHours(Math.floor(h),Math.round((h%1)*60),0,0);
+    const fin=new Date(ini.getTime()+durFila(f)*3600000);
+    ics+='BEGIN:VEVENT\r\nUID:'+Date.now()+'-'+ix+'@roster\r\nDTSTAMP:'+icsF(new Date())+'\r\n'+
+      'DTSTART:'+icsF(ini)+'\r\nDTEND:'+icsF(fin)+'\r\n'+
+      'SUMMARY:'+(c?c.n:'Turno')+' — entrada '+f.h+'\r\n'+
+      'DESCRIPTION:Entrada '+f.h+' / salida estimada '+f.f+(f.ruta?' / ruta '+f.ruta:'')+'\r\n'+
+      (f.ruta?'LOCATION:'+f.ruta+'\r\n':'')+
+      'BEGIN:VALARM\r\nTRIGGER:-PT2H\r\nACTION:DISPLAY\r\nDESCRIPTION:Tu turno inicia en 2 horas\r\nEND:VALARM\r\nEND:VEVENT\r\n';
+  });
+  ics+='END:VCALENDAR\r\n';
+  bajar(ics,'turnos_'+fechaAct+'.ics','text/calendar;charset=utf-8');
+}
+function guardarJSON(){ bajar(JSON.stringify({conductores,plantilla,dias,cfg},null,2),'respaldo_roster_diario.json','application/json'); }
+function cargarJSON(inp){
+  const f=inp.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=e=>{ try{
+    const o=JSON.parse(e.target.result);
+    if(Array.isArray(o.conductores)) conductores=o.conductores;
+    if(Array.isArray(o.plantilla)) plantilla=o.plantilla;
+    if(o.dias) dias=o.dias;
+    if(o.cfg) cfg=Object.assign(cfg,o.cfg);
+    render(); guardar(); alert('Respaldo restaurado.'); ir('dia');
+  }catch(err){ alert('El archivo no es válido.'); } };
+  rd.readAsText(f); inp.value='';
+}
+function bajar(txt,nombre,tipo){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type:tipo}));
+  a.download=nombre; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);document.body.removeChild(a);},500);
+}
+
+/* ===================== RENDER ===================== */
+function render(){
+  if(!rDesde||!rHasta){
+    const h=new Date();
+    rDesde=iso(new Date(h.getFullYear(),h.getMonth(),1));
+    rHasta=iso(new Date(h.getFullYear(),h.getMonth()+1,0));
+  }
+  renderTablas(); pintarDia(); pintarAusencias(); pintarAlertas(); pintarCola(); pintarEnvioTabla(); pintarConsolidado(); pintarHistorial();
+  const ta=document.getElementById('fAviso');
+  if(ta && document.activeElement!==ta) ta.value=D().aviso||'';
+  document.getElementById('cfgPais').value=cfg.pais||'';
+  document.getElementById('cfgApp').value=cfg.app||'wa';
+  document.getElementById('jorTxt').textContent=cfg.jornada;
+  if(document.activeElement!==document.getElementById('cfgTpl')) document.getElementById('cfgTpl').value=cfg.tpl||TPL_DEF;
+}
+
+/* ===================== INICIO ===================== */
+(function(){
+  if(!cargar()) ejemplo();
+  if(normalizarTipos()) guardar();
+  fechaAct=isoManana();
+  semAus=lunesDe(isoHoy());
+  render();
+  setInterval(()=>pintarAlertas(),60000);
+  window.addEventListener('beforeunload',guardar);
+  /* Escape cierra la ventana de Terminar día; clic fuera de la caja también */
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && document.getElementById('modalOT').classList.contains('on')) cerrarModalOT();
+  });
+  document.getElementById('modalOT').addEventListener('mousedown',e=>{
+    if(e.target.id==='modalOT') cerrarModalOT();
+  });
+})();
+</script>
+</body>
+</html>
